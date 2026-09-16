@@ -1,68 +1,12 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useAccounts, useCreateTransaction } from '@/db/hooks';
+import { Button, Card, Field, Screen, styles } from '@/design-system';
 
-export default function NewAccountScreen() {
-  const [name, setName] = useState('');
-  const [balance, setBalance] = useState('0');
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>New account</Text>
-
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        placeholder="Account name"
-        placeholderTextColor="#94a3b8"
-        style={styles.input}
-      />
-
-      <TextInput
-        value={balance}
-        onChangeText={setBalance}
-        keyboardType="numeric"
-        placeholder="Opening balance"
-        placeholderTextColor="#94a3b8"
-        style={styles.input}
-      />
-
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Save account</Text>
-      </TouchableOpacity>
-    </View>
-  );
+export default function NewTransactionScreen() {
+  const router = useRouter(); const { data: accounts = [] } = useAccounts(); const create = useCreateTransaction();
+  const [description, setDescription] = useState(''); const [amount, setAmount] = useState(''); const [type, setType] = useState<'income' | 'expense'>('expense'); const [accountIndex, setAccountIndex] = useState(0);
+  const save = async () => { const parsed = Number(amount); if (!accounts.length) return Alert.alert('Create an account first'); if (!Number.isFinite(parsed) || parsed <= 0) return Alert.alert('Enter a valid amount'); await create.mutateAsync({ accountId: accounts[accountIndex].id, type, amountMinor: Math.round(parsed * 100), description: description.trim() || type }); router.back(); };
+  return <Screen><ScrollView><Text style={styles.title}>New transaction</Text><Text style={styles.subtitle}>Record money moving in or out.</Text><View style={styles.row}><TouchableOpacity style={[styles.choice, type === 'expense' && styles.choiceActive]} onPress={() => setType('expense')}><Text style={styles.choiceText}>Expense</Text></TouchableOpacity><TouchableOpacity style={[styles.choice, type === 'income' && styles.choiceActive]} onPress={() => setType('income')}><Text style={styles.choiceText}>Income</Text></TouchableOpacity></View><Field label="Description" value={description} onChangeText={setDescription} placeholder="Groceries" /><Field label="Amount" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="0.00" /><Text style={styles.label}>Account</Text>{accounts.length ? <Card><Text style={styles.heading}>{accounts[accountIndex]?.name}</Text><Button title="Choose next account" variant="secondary" onPress={() => setAccountIndex((accountIndex + 1) % accounts.length)} /></Card> : <Text style={styles.muted}>Create an account before adding transactions.</Text>}<Button title={create.isPending ? 'Saving...' : 'Save transaction'} onPress={save} /></ScrollView></Screen>;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f172a',
-    padding: 24,
-  },
-  title: {
-    color: '#f8fafc',
-    fontSize: 30,
-    fontWeight: '700',
-    marginBottom: 20,
-  },
-  input: {
-    backgroundColor: '#111827',
-    borderRadius: 12,
-    padding: 14,
-    color: '#f8fafc',
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#374151',
-  },
-  button: {
-    backgroundColor: '#6d5efc',
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginTop: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: '700',
-  },
-});
