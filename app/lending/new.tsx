@@ -1,0 +1,7 @@
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Alert, ScrollView } from 'react-native';
+import { useCreateLending } from '@/db/hooks';
+import { Button, Field, Screen } from '@/design-system';
+
+export default function NewLendingScreen() { const router = useRouter(); const create = useCreateLending(); const [name, setName] = useState(''); const [personName, setPersonName] = useState(''); const [amount, setAmount] = useState(''); const [direction, setDirection] = useState<'lent' | 'borrowed'>('lent'); const save = async () => { if (!name.trim() || !personName.trim()) return Alert.alert('Item and person are required'); await create.mutateAsync({ name: name.trim(), personName: personName.trim(), direction, amountMinor: amount ? Math.round(Number(amount) * 100) : undefined }); router.back(); }; return <Screen><ScrollView><Field label="Item or description" value={name} onChangeText={setName} placeholder="Camera" /><Field label="Person" value={personName} onChangeText={setPersonName} placeholder="Alex" /><Field label="Amount (optional)" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="0.00" /><Button title={direction === 'lent' ? 'Direction: Lent' : 'Direction: Borrowed'} variant="secondary" onPress={() => setDirection(direction === 'lent' ? 'borrowed' : 'lent')} /><Button title={create.isPending ? 'Saving...' : 'Save record'} onPress={save} /></ScrollView></Screen>; }

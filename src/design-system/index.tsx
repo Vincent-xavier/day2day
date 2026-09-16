@@ -1,0 +1,8 @@
+import React from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View, type PressableProps, type TextInputProps } from 'react-native';
+
+export const Screen = ({ children }: { children: React.ReactNode }) => <View style={styles.screen}>{children}</View>;
+export const Card = ({ children, style }: { children: React.ReactNode; style?: any }) => <View style={[styles.card, style]}>{children}</View>;
+export const Button = ({ title, variant = 'primary', ...props }: PressableProps & { title: string; variant?: 'primary' | 'secondary' }) => <Pressable style={[styles.button, variant === 'secondary' && styles.secondary]} {...props}><Text style={styles.buttonText}>{title}</Text></Pressable>;
+export const Field = (props: TextInputProps & { label: string }) => <View style={styles.field}><Text style={styles.label}>{props.label}</Text><TextInput {...props} placeholderTextColor="#94a3b8" style={styles.input} /></View>;
+export const styles = StyleSheet.create({ screen: { flex: 1, backgroundColor: '#0f172a', padding: 20 }, card: { backgroundColor: '#111827', borderRadius: 18, padding: 18, marginBottom: 14 }, button: { backgroundColor: '#6d5efc', borderRadius: 12, padding: 15, alignItems: 'center', marginTop: 8 }, secondary: { backgroundColor: '#1e293b' }, buttonText: { color: '#fff', fontWeight: '700' }, field: { marginBottom: 14 }, label: { color: '#cbd5e1', fontSize: 13, marginBottom: 6 }, input: { color: '#f8fafc', backgroundColor: '#111827', borderColor: '#334155', borderWidth: 1, borderRadius: 12, padding: 14 }, title: { color: '#f8fafc', fontSize: 30, fontWeight: '800', marginBottom: 6 }, subtitle: { color: '#94a3b8', marginBottom: 20 }, heading: { color: '#f8fafc', fontSize: 20, fontWeight: '700' }, muted: { color: '#94a3b8' } });
