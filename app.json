@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Day2Day",
+    "slug": "day2day",
+    "scheme": "day2day",
+    "platforms": ["ios", "android"],
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0E132A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "plugins": ["expo-router"]
+  }
+}
