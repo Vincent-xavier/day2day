@@ -1,8 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { format, isToday, isYesterday, parse, subDays } from "date-fns";
 import {
   Alert,
@@ -71,10 +69,12 @@ export default function NewTransactionScreen() {
       );
     }
   };
-  const onPickDate = (event: DateTimePickerEvent, selected?: Date) => {
+  const onPickDate = (selected: Date) => {
     if (Platform.OS === "android") setCalendarOpen(false);
-    if (event.type === "dismissed" || !selected) return;
     setTransactionDate(format(selected, DATE_FORMAT));
+  };
+  const onDismissDate = () => {
+    if (Platform.OS === "android") setCalendarOpen(false);
   };
   return (
     <Screen>
@@ -293,7 +293,8 @@ export default function NewTransactionScreen() {
                 mode="date"
                 display="inline"
                 maximumDate={new Date()}
-                onChange={onPickDate}
+                onValueChange={(_, selected) => onPickDate(selected)}
+                onDismiss={onDismissDate}
               />
             </BottomSheet>
           ) : (
@@ -302,7 +303,8 @@ export default function NewTransactionScreen() {
               mode="date"
               display="calendar"
               maximumDate={new Date()}
-              onChange={onPickDate}
+              onValueChange={(_, selected) => onPickDate(selected)}
+              onDismiss={onDismissDate}
             />
           )
         ) : null}
