@@ -1,16 +1,23 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useCreateLending } from "@/db/hooks";
 import {
   BackButton,
   Button,
-  Card,
   Field,
   Screen,
   styles,
   colors,
 } from "@/design-system";
+import { formatMoney as money } from "@/utils/money";
 
 type Direction = "lent" | "borrowed";
 
@@ -53,12 +60,14 @@ export default function NewLendingScreen() {
       );
     if (!cleanName)
       return Alert.alert("Purpose required", "Add what this balance is for.");
+    if (!amount.trim())
+      return Alert.alert("Amount required", "Add the amount for this balance.");
     if (cleanPerson.length > 120 || cleanName.length > 120)
       return Alert.alert(
         "Entry is too long",
         "Use 120 characters or fewer for the person and purpose.",
       );
-    if (amountMinor === null)
+    if (amountMinor === null || amountMinor === undefined)
       return Alert.alert(
         "Invalid amount",
         "Enter a positive amount with up to two decimal places.",
@@ -86,47 +95,74 @@ export default function NewLendingScreen() {
     }
   };
 
+  const previewAmount = parseAmount(amount);
+  const directionColor =
+    direction === "lent" ? colors.positive : colors.negative;
+
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ paddingTop: 8, paddingBottom: 30 }}>
-        <BackButton onPress={() => router.back()} />
-        <Text style={styles.eyebrow}>NEW LEDGER ENTRY</Text>
-        <Text style={styles.title}>Record a balance</Text>
-        <Text style={styles.subtitle}>
-          Track money or an item clearly. You can leave the amount blank and add
-          it later.
-        </Text>
-        <Text style={styles.label}>Direction</Text>
-        <View style={styles.row}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
+        <View style={styles.listHeader}>
+          <BackButton onPress={() => router.back()} label="" />
+          <Text style={styles.heading}>New balance</Text>
+          <View style={{ width: 48 }} />
+        </View>
+
+        <View style={{ alignItems: "center", marginTop: 18 }}>
+          <Text style={styles.muted}>Amount</Text>
+          <View style={{ flexDirection: "row", alignItems: "baseline" }}>
+            <Text style={[styles.metric, { color: directionColor }]}>$</Text>
+            <TextInput
+              accessibilityLabel="Amount"
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="decimal-pad"
+              placeholder="0.00"
+              placeholderTextColor={colors.muted}
+              style={[styles.metric, { color: directionColor, minWidth: 130 }]}
+            />
+          </View>
+          <Text style={styles.muted}>Required</Text>
+        </View>
+
+        <View
+          style={{
+            flexDirection: "row",
+            backgroundColor: colors.surfaceMuted,
+            borderRadius: 18,
+            padding: 4,
+            marginTop: 24,
+            marginBottom: 26,
+          }}
+        >
           {(["lent", "borrowed"] as const).map((item) => (
             <TouchableOpacity
               key={item}
               accessibilityRole="button"
-              accessibilityLabel={item === "lent" ? "You give" : "You get"}
               accessibilityState={{ selected: direction === item }}
-              style={[styles.choice, direction === item && styles.choiceActive]}
               onPress={() => setDirection(item)}
+              style={{
+                flex: 1,
+                alignItems: "center",
+                paddingVertical: 12,
+                borderRadius: 14,
+                backgroundColor:
+                  direction === item ? colors.accent : "transparent",
+              }}
             >
               <Text
-                style={[
-                  styles.choiceText,
-                  direction === item && styles.choiceTextActive,
-                ]}
-              >
-                {item === "lent" ? "You give" : "You get"}
-              </Text>
-              <Text
                 style={{
-                  color: direction === item ? colors.onAccent : colors.muted,
-                  fontSize: 11,
-                  marginTop: 4,
+                  color: direction === item ? colors.onAccent : colors.text,
+                  fontWeight: "800",
+                  fontSize: 13,
                 }}
               >
-                {item === "lent" ? "They owe you" : "You owe them"}
+                {item === "lent" ? "You lent" : "You borrowed"}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
+
         <Field
           label="Person"
           value={personName}
@@ -135,20 +171,13 @@ export default function NewLendingScreen() {
           autoCapitalize="words"
           maxLength={120}
         />
+
         <Field
-          label="What is it for?"
+          label="Purpose"
           value={name}
           onChangeText={setName}
-          placeholder="Dinner, cash, or item"
+          placeholder="Dinner or cash"
           maxLength={120}
-        />
-        <Field
-          label="Amount (optional)"
-          value={amount}
-          onChangeText={setAmount}
-          keyboardType="decimal-pad"
-          placeholder="0.00"
-          maxLength={15}
         />
         <Field
           label="Due date (optional)"
@@ -159,26 +188,19 @@ export default function NewLendingScreen() {
           autoCapitalize="none"
         />
         <Field
-          label="Notes (optional)"
+          label="Note (optional)"
           value={description}
           onChangeText={setDescription}
-          placeholder="Add useful context"
+          placeholder="Add a short note"
           multiline
           maxLength={500}
         />
-        <Card style={{ marginTop: 4 }}>
-          <Text style={styles.muted}>
-            {direction === "lent" ? "You give" : "You get"} ·{" "}
-            {personName.trim() || "Person"} ·{" "}
-            {amount.trim() || "amount not set"}
-          </Text>
-        </Card>
+
         <Button
-          title={create.isPending ? "Saving..." : "Save ledger entry"}
+          title={create.isPending ? "Saving..." : "Save balance"}
           onPress={save}
           disabled={create.isPending}
         />
-        <Button title="Cancel" variant="ghost" onPress={() => router.back()} />
       </ScrollView>
     </Screen>
   );

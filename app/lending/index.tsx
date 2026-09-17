@@ -18,18 +18,26 @@ import {
 } from "@/design-system";
 import { formatMoney as money } from "@/utils/money";
 
-type ViewMode = "debtors" | "requests" | "offers";
+type DirectionFilter = "all" | "lent" | "borrowed";
 type StatusFilter = "open" | "overdue" | "settled" | "all";
 type Sort = "recent" | "due" | "amount";
 
-export default function LendingScreen() {
+export default function LendingScreen({
+  showAll = false,
+}: {
+  showAll?: boolean;
+}) {
   const router = useRouter();
   const { data = [], isLoading, isError, refetch } = useLendingItems();
-  const [mode, setMode] = useState<ViewMode>("debtors");
+  const [direction, setDirection] = useState<DirectionFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("open");
   const [sort, setSort] = useState<Sort>("recent");
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const activeFilterCount =
+    (direction !== "all" ? 1 : 0) +
+    (status !== "open" ? 1 : 0) +
+    (sort !== "recent" ? 1 : 0);
   const today = new Date().toISOString().slice(0, 10);
   const openItems = data.filter(
     (item) => item.status === "active" || item.status === "overdue",
@@ -55,11 +63,8 @@ export default function LendingScreen() {
     () =>
       data
         .filter((item) => {
-          const modeMatch =
-            mode === "offers" ||
-            (mode === "debtors"
-              ? item.direction === "lent"
-              : item.direction === "borrowed");
+          const directionMatch =
+            direction === "all" || item.direction === direction;
           const statusMatch =
             status === "all" ||
             (status === "open"
@@ -72,7 +77,7 @@ export default function LendingScreen() {
                 : item.status === "returned");
           const query = search.trim().toLowerCase();
           return (
-            modeMatch &&
+            directionMatch &&
             statusMatch &&
             (!query ||
               `${item.personName} ${item.name} ${item.description ?? ""}`
@@ -87,8 +92,15 @@ export default function LendingScreen() {
               ? (a.dueAt ?? "9999-12-31").localeCompare(b.dueAt ?? "9999-12-31")
               : b.createdAt.localeCompare(a.createdAt),
         ),
-    [data, mode, search, sort, status, today],
+    [data, direction, search, sort, status, today],
   );
+  const clearView = () => {
+    setDirection("all");
+    setStatus("open");
+    setSort("recent");
+    setSearch("");
+  };
+  const displayItems = showAll ? visible : visible.slice(0, 5);
   const openDetails = (itemId: string) =>
     router.push(`/lending/${itemId}` as Href);
 
@@ -126,59 +138,48 @@ export default function LendingScreen() {
             </View>
           </View>
         </LinearGradient>
-        <View style={styles.lendingTabs}>
-          {(
-            [
-              { key: "debtors", label: "Debtors" },
-              { key: "requests", label: "Requests" },
-              { key: "offers", label: "My offers" },
-            ] as const
-          ).map((tab) => (
+        <View style={styles.lendingToolbar}>
+          <Text style={styles.sectionLabel}>
+            {showAll ? visible.length : Math.min(visible.length, 5)} ENTRIES
+          </Text>
+          {showAll ? (
             <Pressable
-              key={tab.key}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: mode === tab.key }}
-              onPress={() => setMode(tab.key)}
-              style={[
-                styles.lendingTab,
-                mode === tab.key && styles.lendingTabActive,
-              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Customize ledger filters"
+              onPress={() => setFilterOpen(true)}
             >
-              <Text
-                style={[
-                  styles.lendingTabText,
-                  mode === tab.key && styles.lendingTabTextActive,
-                ]}
-              >
-                {tab.label}
+              <Text style={styles.linkText}>
+                {activeFilterCount
+                  ? `Filters · ${activeFilterCount}`
+                  : "Filter & sort"}
               </Text>
             </Pressable>
-          ))}
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="View all balances"
+              onPress={() => router.push("/lending/all")}
+            >
+              <Text style={styles.linkText}>View all</Text>
+            </Pressable>
+          )}
         </View>
-        <View style={styles.lendingToolbar}>
-          <Text style={styles.sectionLabel}>{visible.length} ENTRIES</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Customize ledger filters"
-            onPress={() => setFilterOpen(true)}
-          >
-            <Text style={styles.linkText}>Filter & sort</Text>
-          </Pressable>
-        </View>
-        <SearchBar
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search contacts or entries"
-        />
+        {showAll ? (
+          <SearchBar
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search contacts or entries"
+          />
+        ) : null}
         <View style={styles.row}>
           <Card style={styles.stat}>
-            <Text style={styles.muted}>You give</Text>
+            <Text style={styles.muted}>You lent</Text>
             <Text style={[styles.statValue, { color: colors.negative }]}>
               {money(youGive)}
             </Text>
           </Card>
           <Card style={styles.stat}>
-            <Text style={styles.muted}>You get</Text>
+            <Text style={styles.muted}>You borrowed</Text>
             <Text style={[styles.statValue, { color: colors.positive }]}>
               {money(youGet)}
             </Text>
@@ -191,15 +192,15 @@ export default function LendingScreen() {
           />
         ) : isLoading ? (
           <LoadingState label="Loading your ledgers..." />
-        ) : visible.length === 0 ? (
+        ) : displayItems.length === 0 ? (
           <EmptyState
-            title="No entries here"
-            message="Add a ledger entry to start tracking this view."
+            title="No balances yet"
+            message="Add a balance to start tracking money you lend or borrow."
             action="Add ledger entry"
             onAction={() => router.push("/lending/new")}
           />
         ) : (
-          visible.map((item) => {
+          displayItems.map((item) => {
             const overdue =
               item.status !== "returned" && !!item.dueAt && item.dueAt < today;
             const remaining = Math.max(
@@ -207,7 +208,20 @@ export default function LendingScreen() {
               0,
             );
             return (
-              <Card key={item.id} style={styles.lendingCard}>
+              <Pressable
+                key={item.id}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.personName}, ${item.name}. ${money(remaining)} remaining.`}
+                onPress={() => openDetails(item.id)}
+                style={({ pressed }) => [
+                  {
+                    paddingVertical: 12,
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
+                  },
+                  pressed && styles.pressed,
+                ]}
+              >
                 <View style={styles.listHeader}>
                   <View style={styles.contactIdentity}>
                     <View style={styles.contactAvatar}>
@@ -216,102 +230,172 @@ export default function LendingScreen() {
                       </Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.heading}>{item.personName}</Text>
-                      <Text style={styles.muted}>
+                      <Text
+                        style={[styles.heading, { fontSize: 16 }]}
+                        numberOfLines={1}
+                      >
+                        {item.personName}
+                      </Text>
+                      <Text style={styles.muted} numberOfLines={1}>
                         {item.name} ·{" "}
-                        {item.direction === "lent" ? "You give" : "You get"}
+                        {item.direction === "lent"
+                          ? "You lent"
+                          : "You borrowed"}{" "}
+                        ·{" "}
+                        {overdue
+                          ? "Overdue"
+                          : item.status === "returned"
+                            ? "Settled"
+                            : item.dueAt
+                              ? `Due ${item.dueAt}`
+                              : "No due date"}
                       </Text>
                     </View>
                   </View>
-                  {item.amountMinor ? (
-                    <Text style={styles.lendingCardAmount}>
-                      {money(remaining)} left
-                    </Text>
-                  ) : null}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    {item.amountMinor ? (
+                      <Text style={styles.lendingCardAmount}>
+                        {money(remaining)} left
+                      </Text>
+                    ) : (
+                      <Text style={styles.muted}>No amount</Text>
+                    )}
+                    <Text style={{ color: colors.muted, fontSize: 21 }}>›</Text>
+                  </View>
                 </View>
-                <View style={styles.lendingMetaRow}>
-                  <Text style={overdue ? styles.destructiveText : styles.muted}>
-                    {overdue
-                      ? "Overdue"
-                      : item.status === "returned"
-                        ? "Settled"
-                        : item.dueAt
-                          ? `Due ${item.dueAt}`
-                          : "No due date"}
-                  </Text>
-                  <Text style={styles.muted}>
-                    {item.paidMinor
-                      ? `Paid ${money(item.paidMinor)}`
-                      : "No payment yet"}
-                  </Text>
-                </View>
-                <Button
-                  title="View details & payments"
-                  variant="secondary"
-                  onPress={() => openDetails(item.id)}
-                />
-              </Card>
+              </Pressable>
             );
           })
         )}
       </ScrollView>
-      <BottomSheet
-        visible={filterOpen}
-        title="Customize ledger view"
-        onClose={() => setFilterOpen(false)}
-      >
-        <Text style={[styles.muted, { marginBottom: 8 }]}>Status</Text>
-        <Button
-          title="Open balances"
-          variant={status === "open" ? "primary" : "secondary"}
-          onPress={() => {
-            setStatus("open");
-            setFilterOpen(false);
-          }}
-        />
-        <Button
-          title="Overdue balances"
-          variant={status === "overdue" ? "primary" : "secondary"}
-          onPress={() => {
-            setStatus("overdue");
-            setFilterOpen(false);
-          }}
-        />
-        <Button
-          title="Settled balances"
-          variant={status === "settled" ? "primary" : "secondary"}
-          onPress={() => {
-            setStatus("settled");
-            setFilterOpen(false);
-          }}
-        />
-        <Button
-          title="All balances"
-          variant={status === "all" ? "primary" : "secondary"}
-          onPress={() => {
-            setStatus("all");
-            setFilterOpen(false);
-          }}
-        />
-        <Text style={[styles.muted, { marginTop: 14, marginBottom: 8 }]}>
-          Sort by
-        </Text>
-        <Button
-          title="Most recent"
-          variant={sort === "recent" ? "primary" : "secondary"}
-          onPress={() => setSort("recent")}
-        />
-        <Button
-          title="Due date"
-          variant={sort === "due" ? "primary" : "secondary"}
-          onPress={() => setSort("due")}
-        />
-        <Button
-          title="Largest amount"
-          variant={sort === "amount" ? "primary" : "secondary"}
-          onPress={() => setSort("amount")}
-        />
-      </BottomSheet>
+      {showAll ? (
+        <BottomSheet
+          visible={filterOpen}
+          title="Customize ledger view"
+          onClose={() => setFilterOpen(false)}
+        >
+          <Text style={styles.label}>Direction</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {(
+              [
+                ["all", "All balances"],
+                ["lent", "You lent"],
+                ["borrowed", "You borrowed"],
+              ] as [DirectionFilter, string][]
+            ).map(([value, label]) => (
+              <Pressable
+                key={value}
+                accessibilityRole="button"
+                accessibilityState={{ selected: direction === value }}
+                onPress={() => setDirection(value)}
+                style={{
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
+                  borderRadius: 18,
+                  borderWidth: 1,
+                  borderColor:
+                    direction === value ? colors.accent : colors.border,
+                  backgroundColor:
+                    direction === value ? colors.accent : colors.surfaceMuted,
+                }}
+              >
+                <Text
+                  style={{
+                    color: direction === value ? colors.onAccent : colors.text,
+                    fontSize: 12,
+                    fontWeight: "800",
+                  }}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          <Text style={styles.label}>Status</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {(
+              [
+                ["open", "Open"],
+                ["overdue", "Overdue"],
+                ["settled", "Settled"],
+                ["all", "All"],
+              ] as [StatusFilter, string][]
+            ).map(([value, label]) => (
+              <Pressable
+                key={value}
+                accessibilityRole="button"
+                accessibilityState={{ selected: status === value }}
+                onPress={() => setStatus(value)}
+                style={{
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
+                  borderRadius: 18,
+                  borderWidth: 1,
+                  borderColor: status === value ? colors.accent : colors.border,
+                  backgroundColor:
+                    status === value ? colors.accent : colors.surfaceMuted,
+                }}
+              >
+                <Text
+                  style={{
+                    color: status === value ? colors.onAccent : colors.text,
+                    fontSize: 12,
+                    fontWeight: "800",
+                  }}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={[styles.label, { marginTop: 22 }]}>Sort by</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {(
+              [
+                ["recent", "Most recent"],
+                ["due", "Due date"],
+                ["amount", "Largest amount"],
+              ] as [Sort, string][]
+            ).map(([value, label]) => (
+              <Pressable
+                key={value}
+                accessibilityRole="button"
+                accessibilityState={{ selected: sort === value }}
+                onPress={() => setSort(value)}
+                style={{
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
+                  borderRadius: 18,
+                  borderWidth: 1,
+                  borderColor: sort === value ? colors.accent : colors.border,
+                  backgroundColor:
+                    sort === value ? colors.accent : colors.surfaceMuted,
+                }}
+              >
+                <Text
+                  style={{
+                    color: sort === value ? colors.onAccent : colors.text,
+                    fontSize: 12,
+                    fontWeight: "800",
+                  }}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          {activeFilterCount ? (
+            <Button title="Reset view" variant="ghost" onPress={clearView} />
+          ) : null}
+        </BottomSheet>
+      ) : null}
       <BottomBar
         active="lending"
         onNavigate={(tab) => {

@@ -80,6 +80,14 @@ const groupLabel = (dateValue: string) => {
   return format(date, "MMM d, yyyy");
 };
 
+const transactionDateLabel = (dateValue: string) => {
+  const date = new Date(dateValue);
+  const time = format(date, "h:mm a");
+  if (isToday(date)) return `Today, ${time}`;
+  if (isYesterday(date)) return `Yesterday, ${time}`;
+  return format(date, "MMM d, yyyy · h:mm a");
+};
+
 const withinRange = (
   dateValue: string,
   range: RangeFilter,
@@ -101,7 +109,11 @@ const withinRange = (
   return date >= lastMonthStart && date <= lastMonthEnd;
 };
 
-export default function TransactionsScreen() {
+export default function TransactionsScreen({
+  showAll = false,
+}: {
+  showAll?: boolean;
+}) {
   const router = useRouter();
   const { data: accounts = [] } = useAccounts();
   const {
@@ -130,6 +142,7 @@ export default function TransactionsScreen() {
     (typeFilter !== "all" ? 1 : 0) +
     (accountFilter !== "all" ? 1 : 0) +
     (rangeFilter !== "all" ? 1 : 0);
+  const searchActive = Boolean(search.trim());
 
   const filtered = useMemo(
     () =>
@@ -163,13 +176,14 @@ export default function TransactionsScreen() {
 
   const groups = useMemo(() => {
     const buckets = new Map<string, Transaction[]>();
-    filtered.forEach((item) => {
+    const visibleTransactions = showAll ? filtered : filtered.slice(0, 5);
+    visibleTransactions.forEach((item) => {
       const label = groupLabel(item.transactionDate);
       if (!buckets.has(label)) buckets.set(label, []);
       buckets.get(label)!.push(item);
     });
     return Array.from(buckets.entries());
-  }, [filtered]);
+  }, [filtered, showAll]);
 
   const income = filtered
     .filter((item) => item.type === "income")
@@ -181,11 +195,13 @@ export default function TransactionsScreen() {
   const incomeShare = flowTotal ? Math.round((income / flowTotal) * 100) : 0;
 
   const clearFilters = () => {
+    setSearch("");
     setTypeFilter("all");
     setAccountFilter("all");
     setRangeFilter("all");
     setCustomFrom(null);
     setCustomTo(null);
+    setActiveCalendar(null);
   };
 
   const confirmDelete = (item: Transaction) => {
@@ -217,17 +233,16 @@ export default function TransactionsScreen() {
       >
         <View style={styles.listHeader}>
           <ScreenHeader
-            eyebrow="MONEY / ACTIVITY"
-            title="Transactions"
-            subtitle="Your money, in motion."
+            eyebrow={showAll ? undefined : "MONEY / ACTIVITY"}
+            title={showAll ? "All transactions" : "Transactions"}
+            subtitle={showAll ? undefined : "Your money, in motion."}
           />
-          <View style={{ alignItems: "flex-end", gap: 8 }}>
-            <Text style={styles.sectionLabel}>{transactions.length} TOTAL</Text>
+          {showAll ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={
-                activeFilterCount
-                  ? `Filter transactions, ${activeFilterCount} active`
+                activeFilterCount || searchActive
+                  ? `Filter transactions${activeFilterCount ? `, ${activeFilterCount} active` : ""}${searchActive ? ", search active" : ""}`
                   : "Filter transactions"
               }
               onPress={() => setFiltersOpen(true)}
@@ -300,7 +315,9 @@ export default function TransactionsScreen() {
                 </View>
               ) : null}
             </Pressable>
-          </View>
+          ) : (
+            <Text style={styles.sectionLabel}>{transactions.length} TOTAL</Text>
+          )}
         </View>
 
         {isError ? (
@@ -312,86 +329,113 @@ export default function TransactionsScreen() {
           <LoadingState label="Loading your transactions..." />
         ) : (
           <>
-            <SearchBar
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Search description or account"
-            />
-
-            <Card
-              style={{
-                backgroundColor: colors.surfaceRaised,
-                borderColor: colors.borderStrong,
-                padding: 22,
-              }}
-            >
-              <View style={styles.listHeader}>
-                <View>
-                  <Text style={styles.eyebrow}>NET FLOW</Text>
-                  <Text style={styles.metric}>{money(income - expenses)}</Text>
-                </View>
-                <View
-                  style={{
-                    borderWidth: 1,
-                    borderColor: colors.borderStrong,
-                    borderRadius: 999,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
-                  }}
-                >
-                  <Text
+            {!showAll ? (
+              <Card
+                style={{
+                  backgroundColor: colors.surfaceRaised,
+                  borderColor: colors.borderStrong,
+                  padding: 22,
+                }}
+              >
+                <View style={styles.listHeader}>
+                  <View>
+                    <Text style={styles.eyebrow}>NET FLOW</Text>
+                    <Text style={styles.metric}>
+                      {money(income - expenses)}
+                    </Text>
+                  </View>
+                  <View
                     style={{
-                      color: colors.accentText,
-                      fontSize: 11,
-                      fontWeight: "800",
-                      letterSpacing: 0.6,
+                      borderWidth: 1,
+                      borderColor: colors.borderStrong,
+                      borderRadius: 999,
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
                     }}
                   >
-                    {incomeShare}% IN
-                  </Text>
+                    <Text
+                      style={{
+                        color: colors.accentText,
+                        fontSize: 11,
+                        fontWeight: "800",
+                        letterSpacing: 0.6,
+                      }}
+                    >
+                      {incomeShare}% IN
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              {flowTotal > 0 ? (
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${incomeShare}%`,
-                        backgroundColor: colors.positive,
-                        borderRadius: 0,
-                      },
-                    ]}
-                  />
+                {flowTotal > 0 ? (
+                  <View style={styles.progressTrack}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          width: `${incomeShare}%`,
+                          backgroundColor: colors.positive,
+                          borderRadius: 0,
+                        },
+                      ]}
+                    />
+                  </View>
+                ) : null}
+                <View style={[styles.row, { marginTop: 18 }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.muted}>Money in</Text>
+                    <Text style={styles.success}>{money(income)}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.muted}>Money out</Text>
+                    <Text style={styles.destructiveText}>
+                      {money(expenses)}
+                    </Text>
+                  </View>
                 </View>
-              ) : null}
-              <View style={[styles.row, { marginTop: 18 }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.muted}>Money in</Text>
-                  <Text style={styles.success}>{money(income)}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.muted}>Money out</Text>
-                  <Text style={styles.destructiveText}>{money(expenses)}</Text>
-                </View>
-              </View>
-            </Card>
+              </Card>
+            ) : null}
 
             <View style={[styles.listHeader, { marginTop: 14 }]}>
               <View>
-                <Text style={styles.sectionTitle}>Activity</Text>
+                <Text style={styles.sectionTitle}>
+                  {showAll ? "Transactions" : "Activity"}
+                </Text>
                 <Text style={styles.muted}>
-                  {rangeFilter === "all"
-                    ? "All recorded movement"
-                    : RANGE_LABELS[rangeFilter]}
+                  {!showAll
+                    ? "Latest transactions"
+                    : searchActive || activeFilterCount
+                      ? "Filtered results"
+                      : rangeFilter === "all"
+                        ? "All time"
+                        : RANGE_LABELS[rangeFilter]}
                 </Text>
               </View>
-              <Text style={styles.muted}>
-                {filtered.length} result{filtered.length === 1 ? "" : "s"}
-              </Text>
+              {showAll ? (
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={styles.muted}>
+                    {filtered.length} result{filtered.length === 1 ? "" : "s"}
+                  </Text>
+                </View>
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="View all transactions"
+                  onPress={() => router.push("/transactions/all")}
+                  style={({ pressed }) => pressed && styles.pressed}
+                >
+                  <Text style={styles.linkText}>View all</Text>
+                </Pressable>
+              )}
             </View>
 
-            {filtered.length === 0 ? (
+            {showAll ? (
+              <SearchBar
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Search description or account"
+              />
+            ) : null}
+
+            {(showAll ? filtered : filtered.slice(0, 5)).length === 0 ? (
               <EmptyState
                 title={
                   transactions.length
@@ -400,14 +444,16 @@ export default function TransactionsScreen() {
                 }
                 message={
                   transactions.length
-                    ? "Try another filter or search term."
+                    ? "Try another filter or clear the current view."
                     : "Add your first income or expense."
                 }
-                action={!transactions.length ? "Add transaction" : undefined}
+                action={
+                  transactions.length ? "Clear filters" : "Add transaction"
+                }
                 onAction={
-                  !transactions.length
-                    ? () => router.push("/transactions/new")
-                    : undefined
+                  transactions.length
+                    ? clearFilters
+                    : () => router.push("/transactions/new")
                 }
               />
             ) : (
@@ -425,23 +471,23 @@ export default function TransactionsScreen() {
                       onLongPress={() => confirmDelete(item)}
                       style={({ pressed }) => pressed && styles.pressed}
                     >
-                      <Card style={{ paddingVertical: 14 }}>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "flex-start",
-                          }}
-                        >
+                      <View
+                        style={{
+                          paddingVertical: 11,
+                          borderBottomWidth: 1,
+                          borderBottomColor: colors.border,
+                        }}
+                      >
+                        <View style={styles.listHeader}>
                           <View
                             style={[
                               {
-                                width: 40,
-                                height: 40,
-                                borderRadius: 14,
+                                width: 34,
+                                height: 34,
+                                borderRadius: 17,
                                 alignItems: "center",
                                 justifyContent: "center",
-                                marginRight: 12,
+                                marginRight: 10,
                                 backgroundColor: `${transactionColor(item.type)}22`,
                               },
                             ]}
@@ -449,7 +495,7 @@ export default function TransactionsScreen() {
                             <Text
                               style={{
                                 color: transactionColor(item.type),
-                                fontSize: 19,
+                                fontSize: 16,
                                 fontWeight: "800",
                               }}
                             >
@@ -457,32 +503,51 @@ export default function TransactionsScreen() {
                             </Text>
                           </View>
                           <View style={{ flex: 1, paddingRight: 12 }}>
-                            <Text style={styles.heading}>
+                            <Text style={[styles.heading, { fontSize: 16 }]}>
                               {item.description || item.type}
                             </Text>
-                            <Text style={styles.muted}>
+                            <Text
+                              style={[styles.muted, { marginTop: 1 }]}
+                              numberOfLines={1}
+                            >
                               {accountName(item.accountId)} ·{" "}
-                              {new Date(
-                                item.transactionDate,
-                              ).toLocaleDateString()}
+                              {transactionDateLabel(item.transactionDate)}
                             </Text>
                           </View>
-                          <Text
+                          <View
                             style={{
-                              color: transactionColor(item.type),
-                              fontSize: 20,
-                              fontWeight: "800",
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 8,
                             }}
                           >
-                            {item.type === "expense"
-                              ? "-"
-                              : item.type === "transfer"
-                                ? ""
-                                : "+"}
-                            {money(item.amountMinor)}
-                          </Text>
+                            <Text
+                              style={{
+                                color: transactionColor(item.type),
+                                fontSize: 17,
+                                fontWeight: "800",
+                              }}
+                            >
+                              {item.type === "expense"
+                                ? "-"
+                                : item.type === "transfer"
+                                  ? ""
+                                  : "+"}
+                              {money(item.amountMinor)}
+                            </Text>
+                            <Text
+                              accessibilityElementsHidden
+                              style={{
+                                color: colors.muted,
+                                fontSize: 21,
+                                lineHeight: 21,
+                              }}
+                            >
+                              ›
+                            </Text>
+                          </View>
                         </View>
-                      </Card>
+                      </View>
                     </Pressable>
                   ))}
                 </View>
@@ -536,239 +601,251 @@ export default function TransactionsScreen() {
         </Text>
       </Pressable>
 
-      <BottomSheet
-        visible={filtersOpen}
-        title="Filter transactions"
-        onClose={() => setFiltersOpen(false)}
-      >
-        <Text style={styles.label}>Type</Text>
-        <View
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            gap: 8,
-            marginBottom: 18,
-          }}
+      {showAll ? (
+        <BottomSheet
+          visible={filtersOpen}
+          title="Filter transactions"
+          onClose={() => setFiltersOpen(false)}
         >
-          {(["all", "income", "expense", "transfer"] as TypeFilter[]).map(
-            (option) => (
-              <TouchableOpacity
-                key={option}
-                accessibilityRole="button"
-                accessibilityState={{ selected: typeFilter === option }}
-                onPress={() => setTypeFilter(option)}
-                style={{
-                  paddingVertical: 8,
-                  paddingHorizontal: 14,
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor:
-                    typeFilter === option ? colors.accent : colors.border,
-                  backgroundColor:
-                    typeFilter === option ? colors.accent : "transparent",
-                }}
-              >
-                <Text
+          <Text style={styles.label}>Type</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 8,
+              marginBottom: 18,
+            }}
+          >
+            {(["all", "income", "expense", "transfer"] as TypeFilter[]).map(
+              (option) => (
+                <TouchableOpacity
+                  key={option}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: typeFilter === option }}
+                  onPress={() => setTypeFilter(option)}
                   style={{
-                    color:
+                    paddingVertical: 10,
+                    paddingHorizontal: 14,
+                    borderRadius: 18,
+                    borderWidth: 1,
+                    borderColor:
+                      typeFilter === option ? colors.accent : colors.border,
+                    backgroundColor:
                       typeFilter === option
-                        ? colors.onAccent
-                        : colors.accentText,
-                    fontSize: 12,
-                    fontWeight: "700",
+                        ? colors.accent
+                        : colors.surfaceMuted,
                   }}
                 >
-                  {TYPE_LABELS[option]}
-                </Text>
-              </TouchableOpacity>
-            ),
-          )}
-        </View>
+                  <Text
+                    style={{
+                      color:
+                        typeFilter === option ? colors.onAccent : colors.text,
+                      fontSize: 12,
+                      fontWeight: "800",
+                    }}
+                  >
+                    {TYPE_LABELS[option]}
+                  </Text>
+                </TouchableOpacity>
+              ),
+            )}
+          </View>
 
-        <Text style={styles.label}>Date range</Text>
-        <View
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            gap: 8,
-            marginBottom: 12,
-          }}
-        >
-          {(["all", "7d", "month", "lastMonth", "custom"] as RangeFilter[]).map(
-            (option) => (
+          <Text style={styles.label}>Date range</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 8,
+              marginBottom: 12,
+            }}
+          >
+            {(
+              ["all", "7d", "month", "lastMonth", "custom"] as RangeFilter[]
+            ).map((option) => (
               <TouchableOpacity
                 key={option}
                 accessibilityRole="button"
                 accessibilityState={{ selected: rangeFilter === option }}
                 onPress={() => setRangeFilter(option)}
                 style={{
-                  paddingVertical: 8,
+                  paddingVertical: 10,
                   paddingHorizontal: 14,
-                  borderRadius: 20,
+                  borderRadius: 18,
                   borderWidth: 1,
                   borderColor:
                     rangeFilter === option ? colors.accent : colors.border,
                   backgroundColor:
-                    rangeFilter === option ? colors.accent : "transparent",
+                    rangeFilter === option
+                      ? colors.accent
+                      : colors.surfaceMuted,
                 }}
               >
                 <Text
                   style={{
                     color:
-                      rangeFilter === option
-                        ? colors.onAccent
-                        : colors.accentText,
+                      rangeFilter === option ? colors.onAccent : colors.text,
                     fontSize: 12,
-                    fontWeight: "700",
+                    fontWeight: "800",
                   }}
                 >
                   {RANGE_LABELS[option]}
                 </Text>
               </TouchableOpacity>
-            ),
-          )}
-        </View>
-
-        {rangeFilter === "custom" ? (
-          <View style={{ flexDirection: "row", gap: 10, marginBottom: 18 }}>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Choose start date"
-              onPress={() => setActiveCalendar("from")}
-              style={{ flex: 1 }}
-            >
-              <Card style={{ paddingVertical: 12 }}>
-                <Text style={styles.muted}>From</Text>
-                <Text style={[styles.heading, { fontSize: 15, marginTop: 4 }]}>
-                  {customFrom ? format(customFrom, "MMM d, yyyy") : "Any"}
-                </Text>
-              </Card>
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Choose end date"
-              onPress={() => setActiveCalendar("to")}
-              style={{ flex: 1 }}
-            >
-              <Card style={{ paddingVertical: 12 }}>
-                <Text style={styles.muted}>To</Text>
-                <Text style={[styles.heading, { fontSize: 15, marginTop: 4 }]}>
-                  {customTo ? format(customTo, "MMM d, yyyy") : "Any"}
-                </Text>
-              </Card>
-            </TouchableOpacity>
+            ))}
           </View>
-        ) : null}
 
-        {activeCalendar ? (
-          <>
-            <DateTimePicker
-              value={
-                (activeCalendar === "from" ? customFrom : customTo) ??
-                new Date()
-              }
-              mode="date"
-              display={Platform.OS === "ios" ? "inline" : "calendar"}
-              maximumDate={new Date()}
-              onChange={(event: DateTimePickerEvent, selected?: Date) => {
-                if (Platform.OS === "android") setActiveCalendar(null);
-                if (event.type === "dismissed" || !selected) return;
-                if (activeCalendar === "from") setCustomFrom(selected);
-                else setCustomTo(selected);
-              }}
-            />
-            {Platform.OS === "ios" ? (
-              <Button
-                title="Done"
-                variant="ghost"
-                onPress={() => setActiveCalendar(null)}
-              />
-            ) : null}
-          </>
-        ) : null}
-
-        {accounts.length > 1 ? (
-          <>
-            <Text style={styles.label}>Account</Text>
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                gap: 8,
-                marginBottom: 6,
-              }}
-            >
+          {rangeFilter === "custom" ? (
+            <View style={{ flexDirection: "row", gap: 10, marginBottom: 18 }}>
               <TouchableOpacity
                 accessibilityRole="button"
-                accessibilityState={{ selected: accountFilter === "all" }}
-                onPress={() => setAccountFilter("all")}
+                accessibilityLabel="Choose start date"
+                onPress={() => setActiveCalendar("from")}
+                style={{ flex: 1 }}
+              >
+                <Card style={{ paddingVertical: 12 }}>
+                  <Text style={styles.muted}>From</Text>
+                  <Text
+                    style={[styles.heading, { fontSize: 15, marginTop: 4 }]}
+                  >
+                    {customFrom ? format(customFrom, "MMM d, yyyy") : "Any"}
+                  </Text>
+                </Card>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Choose end date"
+                onPress={() => setActiveCalendar("to")}
+                style={{ flex: 1 }}
+              >
+                <Card style={{ paddingVertical: 12 }}>
+                  <Text style={styles.muted}>To</Text>
+                  <Text
+                    style={[styles.heading, { fontSize: 15, marginTop: 4 }]}
+                  >
+                    {customTo ? format(customTo, "MMM d, yyyy") : "Any"}
+                  </Text>
+                </Card>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
+          {activeCalendar ? (
+            <>
+              <DateTimePicker
+                value={
+                  (activeCalendar === "from" ? customFrom : customTo) ??
+                  new Date()
+                }
+                mode="date"
+                display={Platform.OS === "ios" ? "inline" : "calendar"}
+                maximumDate={new Date()}
+                onChange={(event: DateTimePickerEvent, selected?: Date) => {
+                  if (Platform.OS === "android") setActiveCalendar(null);
+                  if (event.type === "dismissed" || !selected) return;
+                  if (activeCalendar === "from") setCustomFrom(selected);
+                  else setCustomTo(selected);
+                }}
+              />
+              {Platform.OS === "ios" ? (
+                <Button
+                  title="Done"
+                  variant="ghost"
+                  onPress={() => setActiveCalendar(null)}
+                />
+              ) : null}
+            </>
+          ) : null}
+
+          {accounts.length > 1 ? (
+            <>
+              <Text style={styles.label}>Account</Text>
+              <View
                 style={{
-                  paddingVertical: 8,
-                  paddingHorizontal: 14,
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor:
-                    accountFilter === "all" ? colors.accent : colors.border,
-                  backgroundColor:
-                    accountFilter === "all" ? colors.accent : "transparent",
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  marginBottom: 6,
                 }}
               >
-                <Text
-                  style={{
-                    color:
-                      accountFilter === "all"
-                        ? colors.onAccent
-                        : colors.accentText,
-                    fontSize: 12,
-                    fontWeight: "700",
-                  }}
-                >
-                  All accounts
-                </Text>
-              </TouchableOpacity>
-              {accounts.map((account) => (
                 <TouchableOpacity
-                  key={account.id}
                   accessibilityRole="button"
-                  accessibilityState={{
-                    selected: accountFilter === account.id,
-                  }}
-                  onPress={() => setAccountFilter(account.id)}
+                  accessibilityState={{ selected: accountFilter === "all" }}
+                  onPress={() => setAccountFilter("all")}
                   style={{
-                    paddingVertical: 8,
+                    paddingVertical: 10,
                     paddingHorizontal: 14,
-                    borderRadius: 20,
+                    borderRadius: 18,
                     borderWidth: 1,
                     borderColor:
-                      accountFilter === account.id
-                        ? colors.accent
-                        : colors.border,
+                      accountFilter === "all" ? colors.accent : colors.border,
                     backgroundColor:
-                      accountFilter === account.id
+                      accountFilter === "all"
                         ? colors.accent
-                        : "transparent",
+                        : colors.surfaceMuted,
                   }}
                 >
                   <Text
                     style={{
                       color:
-                        accountFilter === account.id
-                          ? colors.onAccent
-                          : colors.accentText,
+                        accountFilter === "all" ? colors.onAccent : colors.text,
                       fontSize: 12,
-                      fontWeight: "700",
+                      fontWeight: "800",
                     }}
                   >
-                    {account.name}
+                    All accounts
                   </Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-          </>
-        ) : null}
+                {accounts.map((account) => (
+                  <TouchableOpacity
+                    key={account.id}
+                    accessibilityRole="button"
+                    accessibilityState={{
+                      selected: accountFilter === account.id,
+                    }}
+                    onPress={() => setAccountFilter(account.id)}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 14,
+                      borderRadius: 18,
+                      borderWidth: 1,
+                      borderColor:
+                        accountFilter === account.id
+                          ? colors.accent
+                          : colors.border,
+                      backgroundColor:
+                        accountFilter === account.id
+                          ? colors.accent
+                          : colors.surfaceMuted,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color:
+                          accountFilter === account.id
+                            ? colors.onAccent
+                            : colors.text,
+                        fontSize: 12,
+                        fontWeight: "800",
+                      }}
+                    >
+                      {account.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          ) : null}
 
-        <Button title="Apply filters" onPress={() => setFiltersOpen(false)} />
-      </BottomSheet>
+          {activeFilterCount ? (
+            <Button
+              title="Reset filters"
+              variant="ghost"
+              onPress={clearFilters}
+            />
+          ) : null}
+        </BottomSheet>
+      ) : null}
     </Screen>
   );
 }

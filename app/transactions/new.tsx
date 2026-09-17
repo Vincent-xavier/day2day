@@ -82,39 +82,6 @@ export default function NewTransactionScreen() {
         <BackButton onPress={() => router.back()} />
         <Text style={styles.title}>New transaction</Text>
         <Text style={styles.subtitle}>Record money moving in or out.</Text>
-        <View style={styles.row}>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityState={{ selected: type === "expense" }}
-            style={[styles.choice, type === "expense" && styles.choiceActive]}
-            onPress={() => setType("expense")}
-          >
-            <Text
-              style={[
-                styles.choiceText,
-                type === "expense" && styles.choiceTextActive,
-              ]}
-            >
-              Expense
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityState={{ selected: type === "income" }}
-            style={[styles.choice, type === "income" && styles.choiceActive]}
-            onPress={() => setType("income")}
-          >
-            <Text
-              style={[
-                styles.choiceText,
-                type === "income" && styles.choiceTextActive,
-              ]}
-            >
-              Income
-            </Text>
-          </TouchableOpacity>
-        </View>
-
         <Card style={{ alignItems: "center", paddingVertical: 26 }}>
           <Text style={styles.muted}>Amount</Text>
           <View
@@ -140,6 +107,43 @@ export default function NewTransactionScreen() {
             />
           </View>
         </Card>
+
+        <View
+          style={{
+            flexDirection: "row",
+            backgroundColor: colors.surfaceMuted,
+            borderRadius: 18,
+            padding: 4,
+            marginTop: 16,
+            marginBottom: 18,
+          }}
+        >
+          {(["expense", "income"] as const).map((item) => (
+            <TouchableOpacity
+              key={item}
+              accessibilityRole="button"
+              accessibilityState={{ selected: type === item }}
+              onPress={() => setType(item)}
+              style={{
+                flex: 1,
+                alignItems: "center",
+                paddingVertical: 12,
+                borderRadius: 14,
+                backgroundColor: type === item ? colors.accent : "transparent",
+              }}
+            >
+              <Text
+                style={{
+                  color: type === item ? colors.onAccent : colors.text,
+                  fontSize: 13,
+                  fontWeight: "800",
+                }}
+              >
+                {item === "expense" ? "Spent" : "Received"}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         <Text style={styles.label}>Quick description</Text>
         <View
