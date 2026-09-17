@@ -19,3 +19,24 @@ export type LendingItem = {
   description?: string; amountMinor?: number; currency: string; lentAt: string; dueAt?: string;
   returnedAt?: string; status: LendingStatus; createdAt: string; updatedAt: string;
 };
+
+export type Goal = {
+  id: string;
+  name: string;
+  targetMinor: number;
+  savedMinor: number;
+  targetDate?: string;
+  status: 'active' | 'completed';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Task = {
+  id: string;
+  title: string;
+  notes?: string;
+  dueDate?: string;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+};

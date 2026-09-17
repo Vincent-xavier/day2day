@@ -5,6 +5,12 @@
     "scheme": "day2day",
     "platforms": ["ios", "android"],
     "version": "1.0.0",
+    "android": {
+      "package": "com.day2day.app"
+    },
+    "ios": {
+      "bundleIdentifier": "com.day2day.app"
+    },
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "splash": {

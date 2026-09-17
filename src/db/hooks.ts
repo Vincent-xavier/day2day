@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { accountRepository, lendingRepository, transactionRepository } from '@/db/repositories';
+import { accountRepository, goalRepository, lendingRepository, taskRepository, transactionRepository } from '@/db/repositories';
 
 export const useAccounts = () => useQuery({ queryKey: ['accounts'], queryFn: () => accountRepository.list() });
 export const useCreateAccount = () => { const client = useQueryClient(); return useMutation({ mutationFn: accountRepository.create.bind(accountRepository), onSuccess: () => client.invalidateQueries({ queryKey: ['accounts'] }) }); };
@@ -9,3 +9,9 @@ export const useRemoveTransaction = () => { const client = useQueryClient(); ret
 export const useLendingItems = () => useQuery({ queryKey: ['lending'], queryFn: () => lendingRepository.list() });
 export const useCreateLending = () => { const client = useQueryClient(); return useMutation({ mutationFn: lendingRepository.create.bind(lendingRepository), onSuccess: () => client.invalidateQueries({ queryKey: ['lending'] }) }); };
 export const useReturnLending = () => { const client = useQueryClient(); return useMutation({ mutationFn: lendingRepository.markReturned.bind(lendingRepository), onSuccess: () => client.invalidateQueries({ queryKey: ['lending'] }) }); };
+export const useGoals = () => useQuery({ queryKey: ['goals'], queryFn: () => goalRepository.list() });
+export const useCreateGoal = () => { const client = useQueryClient(); return useMutation({ mutationFn: goalRepository.create.bind(goalRepository), onSuccess: () => client.invalidateQueries({ queryKey: ['goals'] }) }); };
+export const useAddGoalSavings = () => { const client = useQueryClient(); return useMutation({ mutationFn: goalRepository.addSavings.bind(goalRepository), onSuccess: () => client.invalidateQueries({ queryKey: ['goals'] }) }); };
+export const useTasks = () => useQuery({ queryKey: ['tasks'], queryFn: () => taskRepository.list() });
+export const useCreateTask = () => { const client = useQueryClient(); return useMutation({ mutationFn: taskRepository.create.bind(taskRepository), onSuccess: () => client.invalidateQueries({ queryKey: ['tasks'] }) }); };
+export const useToggleTask = () => { const client = useQueryClient(); return useMutation({ mutationFn: ({ taskId, completed }: { taskId: string; completed: boolean }) => taskRepository.toggle(taskId, completed), onSuccess: () => client.invalidateQueries({ queryKey: ['tasks'] }) }); };
