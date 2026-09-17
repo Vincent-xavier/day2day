@@ -11,6 +11,7 @@ import {
   LoadingState,
   Screen,
   styles,
+  colors,
 } from "@/design-system";
 
 export default function TasksScreen() {
@@ -62,7 +63,10 @@ export default function TasksScreen() {
                 <View
                   style={[
                     styles.progressFill,
-                    { width: `${progress * 100}%`, backgroundColor: "#8b7dff" },
+                    {
+                      width: `${progress * 100}%`,
+                      backgroundColor: colors.accent,
+                    },
                   ]}
                 />
               </View>

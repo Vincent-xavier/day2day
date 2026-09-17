@@ -2,7 +2,14 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useCreateTask } from "@/db/hooks";
-import { BackButton, Button, Field, Screen, styles } from "@/design-system";
+import {
+  BackButton,
+  Button,
+  Field,
+  Screen,
+  styles,
+  colors,
+} from "@/design-system";
 
 const toISODate = (date: Date) => date.toISOString().slice(0, 10);
 const dueDatePresets = () => {
@@ -68,15 +75,19 @@ export default function NewTaskScreen() {
                 paddingVertical: 12,
                 borderRadius: 15,
                 borderWidth: 1,
-                borderColor: dueDate === preset.value ? "#8b7dff" : "#303650",
+                borderColor:
+                  dueDate === preset.value ? colors.accent : colors.border,
                 backgroundColor:
-                  dueDate === preset.value ? "#8b7dff" : "transparent",
+                  dueDate === preset.value ? colors.accent : "transparent",
                 alignItems: "center",
               }}
             >
               <Text
                 style={{
-                  color: dueDate === preset.value ? "#fff" : "#b8b1ff",
+                  color:
+                    dueDate === preset.value
+                      ? colors.onAccent
+                      : colors.accentText,
                   fontWeight: "700",
                   fontSize: 13,
                 }}

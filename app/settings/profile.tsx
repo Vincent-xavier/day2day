@@ -157,7 +157,12 @@ export default function ProfileSettingsScreen() {
                   setSaved(false);
                 }}
               >
-                <Text style={styles.choiceText}>
+                <Text
+                  style={[
+                    styles.choiceText,
+                    profile === item && styles.choiceTextActive,
+                  ]}
+                >
                   {item === "both"
                     ? "Both"
                     : item[0].toUpperCase() + item.slice(1)}

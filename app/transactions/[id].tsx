@@ -10,14 +10,16 @@ import {
   LoadingState,
   Screen,
   styles,
+  colors,
+  useTheme,
 } from "@/design-system";
 import { formatMoney as money } from "@/utils/money";
 import type { TransactionType } from "@/db/types";
 
 const typeColor = (type: TransactionType) => {
-  if (type === "income") return "#72dfad";
-  if (type === "expense") return "#fda4af";
-  return "#969bb2";
+  if (type === "income") return colors.positive;
+  if (type === "expense") return colors.negative;
+  return colors.muted;
 };
 
 const typeLabel = (type: TransactionType) => {
@@ -35,6 +37,7 @@ const typeGlyph = (type: TransactionType) => {
 export default function TransactionDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { palette } = useTheme();
   const transactionId = Array.isArray(id) ? id[0] : id;
   const {
     data: transactions = [],
@@ -112,10 +115,16 @@ export default function TransactionDetailsScreen() {
   const createdDate = new Date(transaction.createdAt);
   const backgroundColor =
     transaction.type === "income"
-      ? "#effbf1"
+      ? palette.mode === "light"
+        ? "#effbf1"
+        : "#102b25"
       : transaction.type === "expense"
-        ? "#fff5ed"
-        : "#f1f4ff";
+        ? palette.mode === "light"
+          ? "#fff5ed"
+          : "#321f22"
+        : palette.mode === "light"
+          ? "#f1f4ff"
+          : "#202939";
 
   const shareReceipt = async () => {
     try {
@@ -158,18 +167,20 @@ export default function TransactionDetailsScreen() {
                 borderRadius: 17,
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: "#ffffffcc",
+                backgroundColor: `${palette.surface}cc`,
                 borderWidth: 1,
-                borderColor: "#e5e7eb",
+                borderColor: palette.border,
               },
               pressed && styles.pressed,
             ]}
           >
-            <Text style={{ color: "#20283a", fontSize: 22, lineHeight: 22 }}>
+            <Text style={{ color: palette.text, fontSize: 22, lineHeight: 22 }}>
               ‹
             </Text>
           </Pressable>
-          <Text style={{ color: "#7b8190", fontSize: 12, fontWeight: "700" }}>
+          <Text
+            style={{ color: palette.muted, fontSize: 12, fontWeight: "700" }}
+          >
             TRANSACTION
           </Text>
           <Pressable
@@ -183,14 +194,14 @@ export default function TransactionDetailsScreen() {
                 borderRadius: 17,
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: "#ffffffcc",
+                backgroundColor: `${palette.surface}cc`,
                 borderWidth: 1,
-                borderColor: "#e5e7eb",
+                borderColor: palette.border,
               },
               pressed && styles.pressed,
             ]}
           >
-            <Text style={{ color: "#20283a", fontSize: 18 }}>↥</Text>
+            <Text style={{ color: palette.text, fontSize: 18 }}>↥</Text>
           </Pressable>
         </View>
 
@@ -202,21 +213,29 @@ export default function TransactionDetailsScreen() {
               borderRadius: 36,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "#20283a",
+              backgroundColor: palette.text,
               marginBottom: 14,
             }}
           >
-            <Text style={{ color: "#fff", fontSize: 34, fontWeight: "500" }}>
+            <Text
+              style={{
+                color: palette.background,
+                fontSize: 34,
+                fontWeight: "500",
+              }}
+            >
               {typeGlyph(transaction.type)}
             </Text>
           </View>
-          <Text style={{ color: "#5d6370", fontSize: 12, fontWeight: "600" }}>
+          <Text
+            style={{ color: palette.muted, fontSize: 12, fontWeight: "600" }}
+          >
             {transaction.description ||
               `Paid via ${account?.name ?? "Account"}`}
           </Text>
           <Text
             style={{
-              color: "#20283a",
+              color: palette.text,
               fontSize: 30,
               fontWeight: "800",
               marginTop: 4,
@@ -240,16 +259,18 @@ export default function TransactionDetailsScreen() {
             <Text style={{ color, fontSize: 16 }}>
               {typeGlyph(transaction.type)}
             </Text>
-            <Text style={{ color: "#343b4a", fontSize: 12, fontWeight: "700" }}>
+            <Text
+              style={{ color: palette.text, fontSize: 12, fontWeight: "700" }}
+            >
               {typeLabel(transaction.type)}
             </Text>
-            <Text style={{ color: "#8a909b", fontSize: 14 }}>⌄</Text>
+            <Text style={{ color: palette.muted, fontSize: 14 }}>⌄</Text>
           </View>
         </View>
 
         <View
           style={{
-            backgroundColor: "#f2f3f5",
+            backgroundColor: palette.surfaceMuted,
             borderRadius: 16,
             paddingHorizontal: 16,
             paddingVertical: 6,
@@ -291,11 +312,11 @@ function DetailRow({ label, value }: { label: string; value: string }) {
         minHeight: 36,
       }}
     >
-      <Text style={{ color: "#737985", fontSize: 12 }}>{label}</Text>
+      <Text style={{ color: colors.muted, fontSize: 12 }}>{label}</Text>
       <Text
         numberOfLines={1}
         style={{
-          color: "#252c3a",
+          color: colors.text,
           fontSize: 12,
           fontWeight: "700",
           maxWidth: "65%",

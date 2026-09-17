@@ -2,7 +2,14 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { BottomBar, Card, Screen, styles } from "@/design-system";
+import {
+  BottomBar,
+  Card,
+  Screen,
+  styles,
+  useTheme,
+  type ThemeMode,
+} from "@/design-system";
 
 type ProfileType = "personal" | "business" | "both";
 
@@ -11,6 +18,7 @@ export default function SettingsScreen() {
   const [name, setName] = useState("");
   const [profile, setProfile] = useState<ProfileType>("personal");
   const [imageUri, setImageUri] = useState<string | undefined>();
+  const { mode, setMode } = useTheme();
 
   useEffect(() => {
     SecureStore.getItemAsync("day2day_profile").then((value) => {
@@ -48,6 +56,39 @@ export default function SettingsScreen() {
         <Text style={styles.subtitle}>
           Manage only the parts of Day2Day you use.
         </Text>
+
+        <Card>
+          <Text style={styles.heading}>Appearance</Text>
+          <Text style={[styles.muted, { marginTop: 6, marginBottom: 14 }]}>
+            Follow your device or choose a fixed palette for Day2Day.
+          </Text>
+          <View style={styles.row}>
+            {(
+              [
+                ["system", "System"],
+                ["light", "Light"],
+                ["dark", "Dark"],
+              ] as [ThemeMode, string][]
+            ).map(([value, label]) => (
+              <TouchableOpacity
+                key={value}
+                accessibilityRole="button"
+                accessibilityState={{ selected: mode === value }}
+                onPress={() => setMode(value)}
+                style={[styles.choice, mode === value && styles.choiceActive]}
+              >
+                <Text
+                  style={[
+                    styles.choiceText,
+                    mode === value && styles.choiceTextActive,
+                  ]}
+                >
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Card>
 
         <Card>
           <Text style={styles.heading}>Profile</Text>

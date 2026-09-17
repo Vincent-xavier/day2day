@@ -3,7 +3,15 @@ import * as SecureStore from "expo-secure-store";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { Button, Card, Screen, styles } from "@/design-system";
+import {
+  Button,
+  Card,
+  Screen,
+  styles,
+  colors,
+  useTheme,
+  type ThemePalette,
+} from "@/design-system";
 
 const pages = [
   {
@@ -27,15 +35,17 @@ const pages = [
 ];
 
 function OnboardingGraphic({ type }: { type: string }) {
+  const { palette } = useTheme();
+  const graphicStyles = createGraphicStyles(palette);
   if (type === "private")
     return (
       <LinearGradient
-        colors={["#1e3a4e", "#211d42"]}
+        colors={[colors.surfaceRaised, colors.surface]}
         style={graphicStyles.canvas}
       >
-        <Text style={{ color: "#a9e9d0", fontSize: 58 }}>◌</Text>
+        <Text style={{ color: colors.positive, fontSize: 58 }}>◌</Text>
         <View style={graphicStyles.orbit}>
-          <Text style={{ color: "#b8b1ff", fontSize: 28 }}>◎</Text>
+          <Text style={{ color: colors.accentText, fontSize: 28 }}>◎</Text>
         </View>
         <Text style={graphicStyles.graphicLabel}>PRIVATE</Text>
       </LinearGradient>
@@ -43,45 +53,60 @@ function OnboardingGraphic({ type }: { type: string }) {
   if (type === "start")
     return (
       <LinearGradient
-        colors={["#3b2d3d", "#211d42"]}
+        colors={[colors.surfaceRaised, colors.surface]}
         style={graphicStyles.canvas}
       >
         <View style={graphicStyles.stack}>
           <View
             style={[
               graphicStyles.stackCard,
-              { transform: [{ rotate: "-6deg" }], backgroundColor: "#f2b97f" },
+              {
+                transform: [{ rotate: "-6deg" }],
+                backgroundColor: colors.warning,
+              },
             ]}
           />
           <View
             style={[
               graphicStyles.stackCard,
-              { transform: [{ rotate: "5deg" }], backgroundColor: "#8b7dff" },
+              {
+                transform: [{ rotate: "5deg" }],
+                backgroundColor: colors.accent,
+              },
             ]}
           />
           <View
-            style={[graphicStyles.stackCard, { backgroundColor: "#72dfad" }]}
+            style={[
+              graphicStyles.stackCard,
+              { backgroundColor: colors.positive },
+            ]}
           >
-            <Text style={{ color: "#10121d", fontSize: 28, fontWeight: "800" }}>
+            <Text
+              style={{
+                color: colors.onAccent,
+                fontSize: 28,
+                fontWeight: "800",
+              }}
+            >
               ✓
             </Text>
           </View>
         </View>
-        <Text style={{ color: "#fff", fontSize: 30 }}>→</Text>
+        <Text style={{ color: colors.onAccent, fontSize: 30 }}>→</Text>
         <Text style={graphicStyles.graphicLabel}>ONE STEP AT A TIME</Text>
       </LinearGradient>
     );
   return (
     <LinearGradient
-      colors={["#332c5e", "#211d42"]}
+      colors={[colors.accentSoft, colors.surface]}
       style={graphicStyles.canvas}
     >
       <View style={graphicStyles.glow}>
-        <Text style={{ color: "#f2b97f", fontSize: 34 }}>✦</Text>
+        <Text style={{ color: colors.warning, fontSize: 34 }}>✦</Text>
       </View>
       <View style={graphicStyles.dashboardCard}>
         <View style={graphicStyles.dashboardTop}>
-          <Text style={{ color: "#b8b1ff", fontSize: 20 }}>◈</Text>
+          <Text style={{ color: colors.accentText, fontSize: 20 }}>◈</Text>
           <Text style={graphicStyles.dashboardText}>Today</Text>
         </View>
         <Text style={graphicStyles.dashboardAmount}>$2,480</Text>
@@ -120,8 +145,8 @@ export default function OnboardingScreen() {
             <Card
               style={{
                 marginTop: 8,
-                backgroundColor: "#211d42",
-                borderColor: "#403b70",
+                backgroundColor: colors.surfaceRaised,
+                borderColor: colors.borderStrong,
               }}
             >
               <Text style={styles.heading}>
@@ -136,7 +161,7 @@ export default function OnboardingScreen() {
         <View
           style={{
             borderTopWidth: 1,
-            borderTopColor: "#23273b",
+            borderTopColor: colors.border,
             paddingTop: 14,
             paddingBottom: 8,
           }}
@@ -152,7 +177,8 @@ export default function OnboardingScreen() {
                   flex: 1,
                   height: 5,
                   borderRadius: 5,
-                  backgroundColor: index === page ? "#9e94ff" : "#303650",
+                  backgroundColor:
+                    index === page ? colors.accent : colors.border,
                 }}
               />
             ))}
@@ -169,7 +195,7 @@ export default function OnboardingScreen() {
   );
 }
 
-const graphicStyles = {
+const createGraphicStyles = (palette: ThemePalette) => ({
   canvas: {
     height: 250,
     borderRadius: 30,
@@ -178,7 +204,7 @@ const graphicStyles = {
     justifyContent: "center" as const,
     overflow: "hidden" as const,
     borderWidth: 1,
-    borderColor: "#403b70",
+    borderColor: colors.borderStrong,
   },
   orbit: {
     position: "absolute" as const,
@@ -188,14 +214,14 @@ const graphicStyles = {
     height: 58,
     borderRadius: 29,
     borderWidth: 1,
-    borderColor: "#8b7dff",
+    borderColor: colors.accent,
     alignItems: "center" as const,
     justifyContent: "center" as const,
   },
   graphicLabel: {
     position: "absolute" as const,
     bottom: 18,
-    color: "#aeb2c7",
+    color: colors.muted,
     fontSize: 10,
     fontWeight: "800" as const,
     letterSpacing: 2,
@@ -220,7 +246,7 @@ const graphicStyles = {
     width: 78,
     height: 78,
     borderRadius: 39,
-    backgroundColor: "#f2b97f22",
+    backgroundColor: `${palette.warning}22`,
     alignItems: "center" as const,
     justifyContent: "center" as const,
     marginBottom: 16,
@@ -229,21 +255,25 @@ const graphicStyles = {
     width: 210,
     padding: 18,
     borderRadius: 18,
-    backgroundColor: "#151827",
+    backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: "#4b447e",
+    borderColor: palette.borderStrong,
   },
   dashboardTop: {
     flexDirection: "row" as const,
     alignItems: "center" as const,
     gap: 8,
   },
-  dashboardText: { color: "#aeb2c7", fontSize: 13, fontWeight: "700" as const },
+  dashboardText: {
+    color: palette.muted,
+    fontSize: 13,
+    fontWeight: "700" as const,
+  },
   dashboardAmount: {
-    color: "#f7f7fb",
+    color: palette.text,
     fontSize: 30,
     fontWeight: "800" as const,
     marginTop: 12,
   },
   dashboardLine: { flexDirection: "row" as const, gap: 8, marginTop: 18 },
-};
+});

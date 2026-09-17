@@ -9,6 +9,7 @@ import {
   Field,
   Screen,
   styles,
+  colors,
 } from "@/design-system";
 
 type Direction = "lent" | "borrowed";
@@ -106,12 +107,17 @@ export default function NewLendingScreen() {
               style={[styles.choice, direction === item && styles.choiceActive]}
               onPress={() => setDirection(item)}
             >
-              <Text style={styles.choiceText}>
+              <Text
+                style={[
+                  styles.choiceText,
+                  direction === item && styles.choiceTextActive,
+                ]}
+              >
                 {item === "lent" ? "You give" : "You get"}
               </Text>
               <Text
                 style={{
-                  color: direction === item ? "#fff" : "#969bb2",
+                  color: direction === item ? colors.onAccent : colors.muted,
                   fontSize: 11,
                   marginTop: 4,
                 }}

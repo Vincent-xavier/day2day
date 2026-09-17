@@ -14,6 +14,7 @@ import {
   Screen,
   SearchBar,
   styles,
+  colors,
 } from "@/design-system";
 import { formatMoney as money } from "@/utils/money";
 
@@ -95,7 +96,7 @@ export default function LendingScreen() {
     <Screen>
       <ScrollView contentContainerStyle={{ paddingBottom: 18 }}>
         <LinearGradient
-          colors={["#3b3178", "#6d5efc"]}
+          colors={[colors.accentSoft, colors.accent]}
           style={styles.lendingHero}
         >
           <View style={styles.listHeader}>
@@ -172,13 +173,13 @@ export default function LendingScreen() {
         <View style={styles.row}>
           <Card style={styles.stat}>
             <Text style={styles.muted}>You give</Text>
-            <Text style={[styles.statValue, { color: "#fda4af" }]}>
+            <Text style={[styles.statValue, { color: colors.negative }]}>
               {money(youGive)}
             </Text>
           </Card>
           <Card style={styles.stat}>
             <Text style={styles.muted}>You get</Text>
-            <Text style={[styles.statValue, { color: "#72dfad" }]}>
+            <Text style={[styles.statValue, { color: colors.positive }]}>
               {money(youGet)}
             </Text>
           </Card>

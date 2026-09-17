@@ -22,6 +22,7 @@ import {
   Field,
   Screen,
   styles,
+  colors,
 } from "@/design-system";
 import { parseMoneyMinor } from "@/utils/money";
 
@@ -88,7 +89,14 @@ export default function NewTransactionScreen() {
             style={[styles.choice, type === "expense" && styles.choiceActive]}
             onPress={() => setType("expense")}
           >
-            <Text style={styles.choiceText}>Expense</Text>
+            <Text
+              style={[
+                styles.choiceText,
+                type === "expense" && styles.choiceTextActive,
+              ]}
+            >
+              Expense
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             accessibilityRole="button"
@@ -96,7 +104,14 @@ export default function NewTransactionScreen() {
             style={[styles.choice, type === "income" && styles.choiceActive]}
             onPress={() => setType("income")}
           >
-            <Text style={styles.choiceText}>Income</Text>
+            <Text
+              style={[
+                styles.choiceText,
+                type === "income" && styles.choiceTextActive,
+              ]}
+            >
+              Income
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -116,7 +131,7 @@ export default function NewTransactionScreen() {
               onChangeText={setAmount}
               keyboardType="decimal-pad"
               placeholder="0.00"
-              placeholderTextColor="#5a5f78"
+              placeholderTextColor={colors.muted}
               autoFocus
               style={[
                 styles.metric,
@@ -145,14 +160,16 @@ export default function NewTransactionScreen() {
                 paddingHorizontal: 14,
                 borderRadius: 20,
                 borderWidth: 1,
-                borderColor: description === label ? "#8b7dff" : "#303650",
+                borderColor:
+                  description === label ? colors.accent : colors.border,
                 backgroundColor:
-                  description === label ? "#8b7dff" : "transparent",
+                  description === label ? colors.accent : "transparent",
               }}
             >
               <Text
                 style={{
-                  color: description === label ? "#fff" : "#b8b1ff",
+                  color:
+                    description === label ? colors.onAccent : colors.accentText,
                   fontSize: 12,
                   fontWeight: "700",
                 }}
@@ -187,14 +204,18 @@ export default function NewTransactionScreen() {
               paddingHorizontal: 14,
               borderRadius: 20,
               borderWidth: 1,
-              borderColor: transactionDate === today() ? "#8b7dff" : "#303650",
+              borderColor:
+                transactionDate === today() ? colors.accent : colors.border,
               backgroundColor:
-                transactionDate === today() ? "#8b7dff" : "transparent",
+                transactionDate === today() ? colors.accent : "transparent",
             }}
           >
             <Text
               style={{
-                color: transactionDate === today() ? "#fff" : "#b8b1ff",
+                color:
+                  transactionDate === today()
+                    ? colors.onAccent
+                    : colors.accentText,
                 fontSize: 12,
                 fontWeight: "700",
               }}
@@ -212,14 +233,17 @@ export default function NewTransactionScreen() {
               borderRadius: 20,
               borderWidth: 1,
               borderColor:
-                transactionDate === yesterday() ? "#8b7dff" : "#303650",
+                transactionDate === yesterday() ? colors.accent : colors.border,
               backgroundColor:
-                transactionDate === yesterday() ? "#8b7dff" : "transparent",
+                transactionDate === yesterday() ? colors.accent : "transparent",
             }}
           >
             <Text
               style={{
-                color: transactionDate === yesterday() ? "#fff" : "#b8b1ff",
+                color:
+                  transactionDate === yesterday()
+                    ? colors.onAccent
+                    : colors.accentText,
                 fontSize: 12,
                 fontWeight: "700",
               }}
@@ -325,13 +349,13 @@ export default function NewTransactionScreen() {
             style={{
               paddingVertical: 14,
               borderBottomWidth: 1,
-              borderBottomColor: "#282d43",
+              borderBottomColor: colors.border,
             }}
           >
             <Text
               style={[
                 styles.heading,
-                index === accountIndex && { color: "#b8b1ff" },
+                index === accountIndex && { color: colors.accentText },
               ]}
             >
               {account.name}

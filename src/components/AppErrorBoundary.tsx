@@ -1,6 +1,6 @@
 import { Component, type ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Button } from "@/design-system";
+import { Button, colors } from "@/design-system";
 
 interface Props {
   children: ReactNode;
@@ -49,20 +49,20 @@ export class AppErrorBoundary extends Component<Props, State> {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#0b0d16",
+    backgroundColor: colors.background,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
   },
   title: {
-    color: "#f7f7fb",
+    color: colors.text,
     fontSize: 20,
     fontWeight: "800",
     marginBottom: 10,
     textAlign: "center",
   },
   message: {
-    color: "#969bb2",
+    color: colors.muted,
     fontSize: 15,
     textAlign: "center",
     marginBottom: 20,

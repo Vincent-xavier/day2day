@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
-import { Button, Screen, styles } from "@/design-system";
+import { Button, Screen, styles, colors } from "@/design-system";
 export default function HomeScreen() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +39,7 @@ export default function HomeScreen() {
   return (
     <Screen>
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator color="#9e94ff" />
+        <ActivityIndicator color={colors.accent} />
       </View>
     </Screen>
   );

@@ -38,6 +38,7 @@ import {
   ScreenHeader,
   SearchBar,
   styles,
+  colors,
 } from "@/design-system";
 import { formatMoney as money } from "@/utils/money";
 import type { Transaction, TransactionType } from "@/db/types";
@@ -60,9 +61,9 @@ const TYPE_LABELS: Record<TypeFilter, string> = {
 };
 
 const transactionColor = (type: TransactionType) => {
-  if (type === "income") return "#72dfad";
-  if (type === "expense") return "#fda4af";
-  return "#969bb2";
+  if (type === "income") return colors.positive;
+  if (type === "expense") return colors.negative;
+  return colors.muted;
 };
 
 const transactionGlyph = (type: TransactionType) => {
@@ -210,7 +211,7 @@ export default function TransactionsScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={() => refetch()}
-            tintColor="#8b7dff"
+            tintColor={colors.accent}
           />
         }
       >
@@ -237,9 +238,9 @@ export default function TransactionsScreen() {
                   borderRadius: 22,
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: "#2a2550",
+                  backgroundColor: colors.accentSoft,
                   borderWidth: 1,
-                  borderColor: "#5b538e",
+                  borderColor: colors.borderStrong,
                 },
                 pressed && styles.pressed,
               ]}
@@ -250,7 +251,7 @@ export default function TransactionsScreen() {
                     width: 17,
                     height: 2,
                     borderRadius: 1,
-                    backgroundColor: "#b8b1ff",
+                    backgroundColor: colors.accentText,
                   }}
                 />
                 <View
@@ -258,7 +259,7 @@ export default function TransactionsScreen() {
                     width: 12,
                     height: 2,
                     borderRadius: 1,
-                    backgroundColor: "#b8b1ff",
+                    backgroundColor: colors.accentText,
                   }}
                 />
                 <View
@@ -266,7 +267,7 @@ export default function TransactionsScreen() {
                     width: 7,
                     height: 2,
                     borderRadius: 1,
-                    backgroundColor: "#b8b1ff",
+                    backgroundColor: colors.accentText,
                   }}
                 />
               </View>
@@ -282,13 +283,17 @@ export default function TransactionsScreen() {
                     borderRadius: 10,
                     alignItems: "center",
                     justifyContent: "center",
-                    backgroundColor: "#8b7dff",
+                    backgroundColor: colors.accent,
                     borderWidth: 2,
-                    borderColor: "#0b0d16",
+                    borderColor: colors.background,
                   }}
                 >
                   <Text
-                    style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}
+                    style={{
+                      color: colors.onAccent,
+                      fontSize: 10,
+                      fontWeight: "800",
+                    }}
                   >
                     {activeFilterCount}
                   </Text>
@@ -315,8 +320,8 @@ export default function TransactionsScreen() {
 
             <Card
               style={{
-                backgroundColor: "#211d42",
-                borderColor: "#403b70",
+                backgroundColor: colors.surfaceRaised,
+                borderColor: colors.borderStrong,
                 padding: 22,
               }}
             >
@@ -328,7 +333,7 @@ export default function TransactionsScreen() {
                 <View
                   style={{
                     borderWidth: 1,
-                    borderColor: "#5b538e",
+                    borderColor: colors.borderStrong,
                     borderRadius: 999,
                     paddingHorizontal: 10,
                     paddingVertical: 6,
@@ -336,7 +341,7 @@ export default function TransactionsScreen() {
                 >
                   <Text
                     style={{
-                      color: "#b8b1ff",
+                      color: colors.accentText,
                       fontSize: 11,
                       fontWeight: "800",
                       letterSpacing: 0.6,
@@ -353,7 +358,7 @@ export default function TransactionsScreen() {
                       styles.progressFill,
                       {
                         width: `${incomeShare}%`,
-                        backgroundColor: "#72dfad",
+                        backgroundColor: colors.positive,
                         borderRadius: 0,
                       },
                     ]}
@@ -512,10 +517,10 @@ export default function TransactionsScreen() {
             borderRadius: 29,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "#8b7dff",
+            backgroundColor: colors.accent,
             borderWidth: 2,
-            borderColor: "#b8b1ff",
-            shadowColor: "#000",
+            borderColor: colors.accentText,
+            shadowColor: colors.text,
             shadowOffset: { width: 0, height: 5 },
             shadowOpacity: 0.28,
             shadowRadius: 8,
@@ -524,7 +529,9 @@ export default function TransactionsScreen() {
           pressed && styles.pressed,
         ]}
       >
-        <Text style={{ color: "#fff", fontSize: 30, fontWeight: "300" }}>
+        <Text
+          style={{ color: colors.onAccent, fontSize: 30, fontWeight: "300" }}
+        >
           +
         </Text>
       </Pressable>
@@ -555,14 +562,18 @@ export default function TransactionsScreen() {
                   paddingHorizontal: 14,
                   borderRadius: 20,
                   borderWidth: 1,
-                  borderColor: typeFilter === option ? "#8b7dff" : "#303650",
+                  borderColor:
+                    typeFilter === option ? colors.accent : colors.border,
                   backgroundColor:
-                    typeFilter === option ? "#8b7dff" : "transparent",
+                    typeFilter === option ? colors.accent : "transparent",
                 }}
               >
                 <Text
                   style={{
-                    color: typeFilter === option ? "#fff" : "#b8b1ff",
+                    color:
+                      typeFilter === option
+                        ? colors.onAccent
+                        : colors.accentText,
                     fontSize: 12,
                     fontWeight: "700",
                   }}
@@ -595,14 +606,18 @@ export default function TransactionsScreen() {
                   paddingHorizontal: 14,
                   borderRadius: 20,
                   borderWidth: 1,
-                  borderColor: rangeFilter === option ? "#8b7dff" : "#303650",
+                  borderColor:
+                    rangeFilter === option ? colors.accent : colors.border,
                   backgroundColor:
-                    rangeFilter === option ? "#8b7dff" : "transparent",
+                    rangeFilter === option ? colors.accent : "transparent",
                 }}
               >
                 <Text
                   style={{
-                    color: rangeFilter === option ? "#fff" : "#b8b1ff",
+                    color:
+                      rangeFilter === option
+                        ? colors.onAccent
+                        : colors.accentText,
                     fontSize: 12,
                     fontWeight: "700",
                   }}
@@ -692,14 +707,18 @@ export default function TransactionsScreen() {
                   paddingHorizontal: 14,
                   borderRadius: 20,
                   borderWidth: 1,
-                  borderColor: accountFilter === "all" ? "#8b7dff" : "#303650",
+                  borderColor:
+                    accountFilter === "all" ? colors.accent : colors.border,
                   backgroundColor:
-                    accountFilter === "all" ? "#8b7dff" : "transparent",
+                    accountFilter === "all" ? colors.accent : "transparent",
                 }}
               >
                 <Text
                   style={{
-                    color: accountFilter === "all" ? "#fff" : "#b8b1ff",
+                    color:
+                      accountFilter === "all"
+                        ? colors.onAccent
+                        : colors.accentText,
                     fontSize: 12,
                     fontWeight: "700",
                   }}
@@ -721,14 +740,21 @@ export default function TransactionsScreen() {
                     borderRadius: 20,
                     borderWidth: 1,
                     borderColor:
-                      accountFilter === account.id ? "#8b7dff" : "#303650",
+                      accountFilter === account.id
+                        ? colors.accent
+                        : colors.border,
                     backgroundColor:
-                      accountFilter === account.id ? "#8b7dff" : "transparent",
+                      accountFilter === account.id
+                        ? colors.accent
+                        : "transparent",
                   }}
                 >
                   <Text
                     style={{
-                      color: accountFilter === account.id ? "#fff" : "#b8b1ff",
+                      color:
+                        accountFilter === account.id
+                          ? colors.onAccent
+                          : colors.accentText,
                       fontSize: 12,
                       fontWeight: "700",
                     }}

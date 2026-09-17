@@ -17,6 +17,7 @@ import {
   LoadingState,
   Screen,
   styles,
+  colors,
 } from "@/design-system";
 import { formatMoney as money } from "@/utils/money";
 
@@ -194,8 +195,8 @@ export default function DashboardScreen() {
           <>
             <Card
               style={{
-                backgroundColor: "#211d42",
-                borderColor: "#403b70",
+                backgroundColor: colors.surfaceRaised,
+                borderColor: colors.borderStrong,
                 padding: 22,
               }}
             >
