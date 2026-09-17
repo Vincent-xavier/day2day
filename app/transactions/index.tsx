@@ -59,6 +59,18 @@ const TYPE_LABELS: Record<TypeFilter, string> = {
   transfer: "Transfers",
 };
 
+const transactionColor = (type: TransactionType) => {
+  if (type === "income") return "#72dfad";
+  if (type === "expense") return "#fda4af";
+  return "#969bb2";
+};
+
+const transactionGlyph = (type: TransactionType) => {
+  if (type === "income") return "↑";
+  if (type === "expense") return "↓";
+  return "↔";
+};
+
 const groupLabel = (dateValue: string) => {
   const date = new Date(dateValue);
   if (isToday(date)) return "Today";
@@ -193,7 +205,7 @@ export default function TransactionsScreen() {
   return (
     <Screen>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 18 }}
+        contentContainerStyle={{ paddingBottom: 104 }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -202,15 +214,89 @@ export default function TransactionsScreen() {
           />
         }
       >
-        <ScreenHeader
-          eyebrow="MONEY"
-          title="Transactions"
-          subtitle="A simple record of money moving in and out."
-        />
-        <Button
-          title="Add transaction"
-          onPress={() => router.push("/transactions/new")}
-        />
+        <View style={styles.listHeader}>
+          <ScreenHeader
+            eyebrow="MONEY / ACTIVITY"
+            title="Transactions"
+            subtitle="Your money, in motion."
+          />
+          <View style={{ alignItems: "flex-end", gap: 8 }}>
+            <Text style={styles.sectionLabel}>{transactions.length} TOTAL</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                activeFilterCount
+                  ? `Filter transactions, ${activeFilterCount} active`
+                  : "Filter transactions"
+              }
+              onPress={() => setFiltersOpen(true)}
+              style={({ pressed }) => [
+                {
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#2a2550",
+                  borderWidth: 1,
+                  borderColor: "#5b538e",
+                },
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={{ alignItems: "center", gap: 3 }}>
+                <View
+                  style={{
+                    width: 17,
+                    height: 2,
+                    borderRadius: 1,
+                    backgroundColor: "#b8b1ff",
+                  }}
+                />
+                <View
+                  style={{
+                    width: 12,
+                    height: 2,
+                    borderRadius: 1,
+                    backgroundColor: "#b8b1ff",
+                  }}
+                />
+                <View
+                  style={{
+                    width: 7,
+                    height: 2,
+                    borderRadius: 1,
+                    backgroundColor: "#b8b1ff",
+                  }}
+                />
+              </View>
+              {activeFilterCount ? (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -5,
+                    right: -5,
+                    minWidth: 20,
+                    height: 20,
+                    paddingHorizontal: 5,
+                    borderRadius: 10,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#8b7dff",
+                    borderWidth: 2,
+                    borderColor: "#0b0d16",
+                  }}
+                >
+                  <Text
+                    style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}
+                  >
+                    {activeFilterCount}
+                  </Text>
+                </View>
+              ) : null}
+            </Pressable>
+          </View>
+        </View>
 
         {isError ? (
           <ErrorState
@@ -227,26 +313,36 @@ export default function TransactionsScreen() {
               placeholder="Search description or account"
             />
 
-            <Card>
-              <View style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.muted}>Income</Text>
-                  <Text style={styles.success}>{money(income)}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.muted}>Expenses</Text>
-                  <Text style={styles.destructiveText}>{money(expenses)}</Text>
-                </View>
+            <Card
+              style={{
+                backgroundColor: "#211d42",
+                borderColor: "#403b70",
+                padding: 22,
+              }}
+            >
+              <View style={styles.listHeader}>
                 <View>
-                  <Text style={styles.muted}>Net</Text>
+                  <Text style={styles.eyebrow}>NET FLOW</Text>
+                  <Text style={styles.metric}>{money(income - expenses)}</Text>
+                </View>
+                <View
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#5b538e",
+                    borderRadius: 999,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                  }}
+                >
                   <Text
-                    style={[
-                      styles.statValue,
-                      { fontSize: 20 },
-                      income - expenses < 0 && styles.destructiveText,
-                    ]}
+                    style={{
+                      color: "#b8b1ff",
+                      fontSize: 11,
+                      fontWeight: "800",
+                      letterSpacing: 0.6,
+                    }}
                   >
-                    {money(income - expenses)}
+                    {incomeShare}% IN
                   </Text>
                 </View>
               </View>
@@ -264,36 +360,30 @@ export default function TransactionsScreen() {
                   />
                 </View>
               ) : null}
+              <View style={[styles.row, { marginTop: 18 }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.muted}>Money in</Text>
+                  <Text style={styles.success}>{money(income)}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.muted}>Money out</Text>
+                  <Text style={styles.destructiveText}>{money(expenses)}</Text>
+                </View>
+              </View>
             </Card>
 
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                marginBottom: 4,
-              }}
-            >
-              <View style={{ flex: 1 }}>
-                <Button
-                  title={
-                    activeFilterCount
-                      ? `Filters · ${activeFilterCount} active`
-                      : "Filter transactions"
-                  }
-                  variant="secondary"
-                  onPress={() => setFiltersOpen(true)}
-                />
+            <View style={[styles.listHeader, { marginTop: 14 }]}>
+              <View>
+                <Text style={styles.sectionTitle}>Activity</Text>
+                <Text style={styles.muted}>
+                  {rangeFilter === "all"
+                    ? "All recorded movement"
+                    : RANGE_LABELS[rangeFilter]}
+                </Text>
               </View>
-              {activeFilterCount ? (
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear filters"
-                  onPress={clearFilters}
-                >
-                  <Text style={styles.linkText}>Clear</Text>
-                </TouchableOpacity>
-              ) : null}
+              <Text style={styles.muted}>
+                {filtered.length} result{filtered.length === 1 ? "" : "s"}
+              </Text>
             </View>
 
             {filtered.length === 0 ? (
@@ -324,10 +414,13 @@ export default function TransactionsScreen() {
                       key={item.id}
                       accessibilityRole="button"
                       accessibilityLabel={`${item.description || item.type}, ${money(item.amountMinor)}. Long press to delete.`}
+                      onPress={() =>
+                        router.push(`/transactions/${item.id}` as Href)
+                      }
                       onLongPress={() => confirmDelete(item)}
                       style={({ pressed }) => pressed && styles.pressed}
                     >
-                      <Card>
+                      <Card style={{ paddingVertical: 14 }}>
                         <View
                           style={{
                             flexDirection: "row",
@@ -335,6 +428,29 @@ export default function TransactionsScreen() {
                             alignItems: "flex-start",
                           }}
                         >
+                          <View
+                            style={[
+                              {
+                                width: 40,
+                                height: 40,
+                                borderRadius: 14,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                marginRight: 12,
+                                backgroundColor: `${transactionColor(item.type)}22`,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={{
+                                color: transactionColor(item.type),
+                                fontSize: 19,
+                                fontWeight: "800",
+                              }}
+                            >
+                              {transactionGlyph(item.type)}
+                            </Text>
+                          </View>
                           <View style={{ flex: 1, paddingRight: 12 }}>
                             <Text style={styles.heading}>
                               {item.description || item.type}
@@ -348,12 +464,7 @@ export default function TransactionsScreen() {
                           </View>
                           <Text
                             style={{
-                              color:
-                                item.type === "expense"
-                                  ? "#fda4af"
-                                  : item.type === "transfer"
-                                    ? "#969bb2"
-                                    : "#72dfad",
+                              color: transactionColor(item.type),
                               fontSize: 20,
                               fontWeight: "800",
                             }}
@@ -386,6 +497,37 @@ export default function TransactionsScreen() {
           if (tab === "settings") router.push("/settings" as unknown as Href);
         }}
       />
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Add transaction"
+        onPress={() => router.push("/transactions/new")}
+        style={({ pressed }) => [
+          {
+            position: "absolute",
+            right: 28,
+            bottom: 86,
+            width: 58,
+            height: 58,
+            borderRadius: 29,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#8b7dff",
+            borderWidth: 2,
+            borderColor: "#b8b1ff",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 5 },
+            shadowOpacity: 0.28,
+            shadowRadius: 8,
+            elevation: 7,
+          },
+          pressed && styles.pressed,
+        ]}
+      >
+        <Text style={{ color: "#fff", fontSize: 30, fontWeight: "300" }}>
+          +
+        </Text>
+      </Pressable>
 
       <BottomSheet
         visible={filtersOpen}

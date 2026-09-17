@@ -24,9 +24,13 @@ export const colors = {
   surfaceMuted: "#1b1f31",
 } as const;
 
-export const Screen = ({ children }: { children: React.ReactNode }) => (
-  <SafeAreaView style={styles.screen}>{children}</SafeAreaView>
-);
+export const Screen = ({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: any;
+}) => <SafeAreaView style={[styles.screen, style]}>{children}</SafeAreaView>;
 export const Card = ({
   children,
   style,
@@ -483,6 +487,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     marginBottom: 18,
+    marginTop: 8,
   },
   searchIcon: {
     color: "#44485d",
