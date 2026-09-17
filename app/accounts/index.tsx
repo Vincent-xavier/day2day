@@ -1,13 +1,129 @@
-import { useRouter, type Href } from 'expo-router';
-import { ScrollView, Text, View } from 'react-native';
-import { useAccounts, useTransactions } from '@/db/hooks';
-import { BottomBar, Card, Button, EmptyState, ErrorState, LoadingState, Screen, styles } from '@/design-system';
-import { formatMoney as money } from '@/utils/money';
+import { useRouter, type Href } from "expo-router";
+import { ScrollView, Text, View } from "react-native";
+import { useAccounts, useTransactions } from "@/db/hooks";
+import {
+  BottomBar,
+  Card,
+  Button,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  Screen,
+  styles,
+} from "@/design-system";
+import { formatMoney as money } from "@/utils/money";
 export default function AccountsScreen() {
   const router = useRouter();
-  const { data: accounts = [], isLoading, isError, refetch } = useAccounts(); const { data: transactions = [] } = useTransactions();
-  const total = accounts.reduce((sum, account) => sum + account.openingBalanceMinor, 0) + transactions.reduce((sum, item) => sum + (item.type === 'income' ? item.amountMinor : item.type === 'expense' ? -item.amountMinor : 0), 0);
-  const accountBalance = (id: string, opening: number) => opening + transactions.filter((item) => item.accountId === id).reduce((sum, item) => sum + (item.type === 'income' ? item.amountMinor : item.type === 'expense' ? -item.amountMinor : 0), 0);
-  return <Screen><ScrollView contentContainerStyle={{ paddingBottom: 18 }}><View style={styles.accountWelcome}><View style={styles.accountAvatar}><Text style={styles.accountAvatarText}>D</Text></View><View style={{ flex: 1 }}><Text style={styles.muted}>Your money space</Text><Text style={styles.accountGreeting}>Good to see you</Text></View></View><Card style={styles.accountHero}><Text style={styles.accountHeroLabel}>TOTAL BALANCE</Text><Text style={styles.accountHeroAmount}>{money(total)}</Text><Text style={styles.accountHeroChange}>Across {accounts.length || 'no'} account{accounts.length === 1 ? '' : 's'}</Text><Button title="Add account" onPress={() => router.push('/accounts/new')} /></Card>{isError ? <ErrorState message="Your accounts couldn't load." onRetry={() => refetch()} /> : isLoading ? <LoadingState label="Loading your accounts..." /> : <><View style={styles.listHeader}><Text style={styles.sectionTitle}>My accounts</Text><Text style={styles.muted}>{accounts.length} total</Text></View>{accounts.length === 0 ? <EmptyState title="No accounts yet" message="Add a wallet or bank account to see your balance here." action="Add account" onAction={() => router.push('/accounts/new')} /> : accounts.map((account) => <Card key={account.id}><View style={styles.listHeader}><View style={styles.accountRowIdentity}><View style={styles.accountTypeIcon}><Text style={styles.accountTypeIconText}>◉</Text></View><View><Text style={styles.heading}>{account.name}</Text><Text style={styles.muted}>{account.type} · opening {money(account.openingBalanceMinor)}</Text></View></View><Text style={styles.accountBalance}>{money(accountBalance(account.id, account.openingBalanceMinor))}</Text></View></Card>)}</>}</ScrollView><BottomBar active="money" onNavigate={(tab) => { if (tab === 'home') router.push('/dashboard'); if (tab === 'money') router.push('/transactions'); if (tab === 'lending') router.push('/lending'); if (tab === 'tasks') router.push('/tasks'); if (tab === 'settings') router.push('/settings' as unknown as Href); }} /></Screen>;
+  const { data: accounts = [], isLoading, isError, refetch } = useAccounts();
+  const { data: transactions = [] } = useTransactions();
+  const total =
+    accounts.reduce((sum, account) => sum + account.openingBalanceMinor, 0) +
+    transactions.reduce(
+      (sum, item) =>
+        sum +
+        (item.type === "income"
+          ? item.amountMinor
+          : item.type === "expense"
+            ? -item.amountMinor
+            : 0),
+      0,
+    );
+  const accountBalance = (id: string, opening: number) =>
+    opening +
+    transactions
+      .filter((item) => item.accountId === id)
+      .reduce(
+        (sum, item) =>
+          sum +
+          (item.type === "income"
+            ? item.amountMinor
+            : item.type === "expense"
+              ? -item.amountMinor
+              : 0),
+        0,
+      );
+  return (
+    <Screen>
+      <ScrollView contentContainerStyle={{ paddingBottom: 18 }}>
+        <View style={styles.accountWelcome}>
+          <View style={styles.accountAvatar}>
+            <Text style={styles.accountAvatarText}>D</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.muted}>Your money space</Text>
+            <Text style={styles.accountGreeting}>Good to see you</Text>
+          </View>
+        </View>
+        <Card style={styles.accountHero}>
+          <Text style={styles.accountHeroLabel}>TOTAL BALANCE</Text>
+          <Text style={styles.accountHeroAmount}>{money(total)}</Text>
+          <Text style={styles.accountHeroChange}>
+            Across {accounts.length || "no"} account
+            {accounts.length === 1 ? "" : "s"}
+          </Text>
+          <Button
+            title="Add account"
+            onPress={() => router.push("/accounts/new")}
+          />
+        </Card>
+        {isError ? (
+          <ErrorState
+            message="Your accounts couldn't load."
+            onRetry={() => refetch()}
+          />
+        ) : isLoading ? (
+          <LoadingState label="Loading your accounts..." />
+        ) : (
+          <>
+            <View style={styles.listHeader}>
+              <Text style={styles.sectionTitle}>My accounts</Text>
+              <Text style={styles.muted}>{accounts.length} total</Text>
+            </View>
+            {accounts.length === 0 ? (
+              <EmptyState
+                title="No accounts yet"
+                message="Add a wallet or bank account to see your balance here."
+                action="Add account"
+                onAction={() => router.push("/accounts/new")}
+              />
+            ) : (
+              accounts.map((account) => (
+                <Card key={account.id}>
+                  <View style={styles.listHeader}>
+                    <View style={styles.accountRowIdentity}>
+                      <View style={styles.accountTypeIcon}>
+                        <Text style={styles.accountTypeIconText}>◉</Text>
+                      </View>
+                      <View>
+                        <Text style={styles.heading}>{account.name}</Text>
+                        <Text style={styles.muted}>
+                          {account.type} · opening{" "}
+                          {money(account.openingBalanceMinor)}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.accountBalance}>
+                      {money(
+                        accountBalance(account.id, account.openingBalanceMinor),
+                      )}
+                    </Text>
+                  </View>
+                </Card>
+              ))
+            )}
+          </>
+        )}
+      </ScrollView>
+      <BottomBar
+        active="money"
+        onNavigate={(tab) => {
+          if (tab === "home") router.push("/dashboard");
+          if (tab === "money") router.push("/transactions");
+          if (tab === "lending") router.push("/lending");
+          if (tab === "tasks") router.push("/tasks");
+          if (tab === "settings") router.push("/settings" as unknown as Href);
+        }}
+      />
+    </Screen>
+  );
 }
-

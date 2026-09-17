@@ -1,6 +1,6 @@
-import * as SQLite from 'expo-sqlite';
+import * as SQLite from "expo-sqlite";
 
-export const db = SQLite.openDatabaseSync('day2day.db');
+export const db = SQLite.openDatabaseSync("day2day.db");
 
 export function initializeDatabase() {
   db.execSync(`
@@ -139,4 +139,5 @@ export function initializeDatabase() {
 }
 
 export const now = () => new Date().toISOString();
-export const id = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+export const id = () =>
+  `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;

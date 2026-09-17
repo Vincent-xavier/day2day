@@ -3,8 +3,8 @@ import * as SQLite from 'expo-sqlite';
 export const db = SQLite.openDatabaseSync('day2day.db');
 
 export function initializeDatabase() {
-  db.execSync(`
-    PRAGMA journal_mode = WAL;
+db.execSync(`
+PRAGMA journal_mode = WAL;
 
     CREATE TABLE IF NOT EXISTS accounts (
       id TEXT PRIMARY KEY,
@@ -40,5 +40,6 @@ export function initializeDatabase() {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       synced_at TEXT
     );
-  `);
+
+`);
 }

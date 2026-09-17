@@ -1,6 +1,6 @@
-import { Component, type ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Button } from '@/design-system';
+import { Component, type ReactNode } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { Button } from "@/design-system";
 
 interface Props {
   children: ReactNode;
@@ -24,7 +24,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: unknown) {
-    console.error('Unhandled app error:', error);
+    console.error("Unhandled app error:", error);
   }
 
   reset = () => this.setState({ hasError: false });
@@ -35,7 +35,8 @@ export class AppErrorBoundary extends Component<Props, State> {
         <View style={styles.root}>
           <Text style={styles.title}>Something went wrong</Text>
           <Text style={styles.message}>
-            Your data is safe on this device. Restarting this screen usually fixes it.
+            Your data is safe on this device. Restarting this screen usually
+            fixes it.
           </Text>
           <Button title="Try again" onPress={this.reset} />
         </View>
@@ -46,7 +47,25 @@ export class AppErrorBoundary extends Component<Props, State> {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0b0d16', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  title: { color: '#f7f7fb', fontSize: 20, fontWeight: '800', marginBottom: 10, textAlign: 'center' },
-  message: { color: '#969bb2', fontSize: 15, textAlign: 'center', marginBottom: 20, lineHeight: 21 },
+  root: {
+    flex: 1,
+    backgroundColor: "#0b0d16",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  title: {
+    color: "#f7f7fb",
+    fontSize: 20,
+    fontWeight: "800",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  message: {
+    color: "#969bb2",
+    fontSize: 15,
+    textAlign: "center",
+    marginBottom: 20,
+    lineHeight: 21,
+  },
 });
