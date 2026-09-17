@@ -16,8 +16,12 @@ export type LendingDirection = 'lent' | 'borrowed';
 export type LendingStatus = 'active' | 'returned' | 'overdue';
 export type LendingItem = {
   id: string; personId: string; personName: string; direction: LendingDirection; name: string;
-  description?: string; amountMinor?: number; currency: string; lentAt: string; dueAt?: string;
+  description?: string; amountMinor?: number; paidMinor: number; currency: string; lentAt: string; dueAt?: string;
   returnedAt?: string; status: LendingStatus; createdAt: string; updatedAt: string;
+};
+export type LendingPayment = {
+  id: string; lendingItemId: string; amountMinor: number; paymentDate: string;
+  method?: string; note?: string; createdAt: string;
 };
 
 export type Goal = {

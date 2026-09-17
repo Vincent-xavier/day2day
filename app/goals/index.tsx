@@ -1,8 +1,8 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useAddGoalSavings, useGoals } from '@/db/hooks';
-import { Button, Card, Field, Screen, styles } from '@/design-system';
+import { BottomBar, Button, Card, EmptyState, Field, Screen, ScreenHeader, styles } from '@/design-system';
 
 const money = (minor: number) => `$${(minor / 100).toFixed(2)}`;
 
@@ -27,13 +27,9 @@ export default function GoalsScreen() {
   return (
     <Screen>
       <ScrollView>
-        <Text style={styles.eyebrow}>PROGRESS</Text>
-        <Text style={styles.title}>Goals</Text>
-        <Text style={styles.subtitle}>Turn intentions into visible progress.</Text>
+        <ScreenHeader eyebrow="PROGRESS" title="Goals" subtitle="Turn intentions into visible progress." />
         <Button title="Create a goal" onPress={() => router.push('/goals/new')} />
-        {isLoading ? <Text style={styles.muted}>Loading...</Text> : goals.length === 0 ? (
-          <Card><Text style={styles.heading}>No goals yet</Text><Text style={styles.muted}>Create a savings target to give your next milestone a home.</Text></Card>
-        ) : goals.map((goal) => {
+        {isLoading ? <Text style={styles.muted}>Loading your goals...</Text> : goals.length === 0 ? <EmptyState title="No goals yet" message="Create a savings target to give your next milestone a home." action="Create a goal" onAction={() => router.push('/goals/new')} /> : goals.map((goal) => {
           const progress = goal.targetMinor ? Math.min(goal.savedMinor / goal.targetMinor, 1) : 0;
           return (
             <Card key={goal.id}>
@@ -46,8 +42,6 @@ export default function GoalsScreen() {
             </Card>
           );
         })}
-        <Button title="Back to modules" variant="secondary" onPress={() => router.push('/modules')} />
-      </ScrollView>
-    </Screen>
+      </ScrollView><BottomBar active="home" onNavigate={(tab) => { if (tab === 'home') router.push('/dashboard'); if (tab === 'money') router.push('/transactions'); if (tab === 'lending') router.push('/lending'); if (tab === 'tasks') router.push('/tasks'); if (tab === 'settings') router.push('/settings' as unknown as Href); }} /></Screen>
   );
 }

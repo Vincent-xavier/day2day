@@ -76,6 +76,17 @@ export function initializeDatabase() {
       FOREIGN KEY (person_id) REFERENCES people(id)
     );
 
+    CREATE TABLE IF NOT EXISTS lending_payments (
+      id TEXT PRIMARY KEY NOT NULL,
+      lending_item_id TEXT NOT NULL,
+      amount_minor INTEGER NOT NULL CHECK(amount_minor > 0),
+      payment_date TEXT NOT NULL,
+      method TEXT,
+      note TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (lending_item_id) REFERENCES lending_items(id)
+    );
+
     CREATE TABLE IF NOT EXISTS budgets (
       id TEXT PRIMARY KEY NOT NULL,
       category_id TEXT NOT NULL,
@@ -123,6 +134,7 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_transactions_account ON transactions(account_id);
     CREATE INDEX IF NOT EXISTS idx_lending_person ON lending_items(person_id);
     CREATE INDEX IF NOT EXISTS idx_lending_status ON lending_items(status);
+    CREATE INDEX IF NOT EXISTS idx_lending_payments_item ON lending_payments(lending_item_id);
   `);
 }
 
