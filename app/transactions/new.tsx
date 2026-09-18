@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { format, isToday, isYesterday, parse, subDays } from "date-fns";
@@ -38,11 +38,14 @@ const describeDate = (value: string) => {
 
 export default function NewTransactionScreen() {
   const router = useRouter();
+  const { type: initialType } = useLocalSearchParams<{ type?: string }>();
   const { data: accounts = [] } = useAccounts();
   const create = useCreateTransaction();
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [type, setType] = useState<"income" | "expense">("expense");
+  const [type, setType] = useState<"income" | "expense">(
+    initialType === "income" ? "income" : "expense",
+  );
   const [accountIndex, setAccountIndex] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [transactionDate, setTransactionDate] = useState(today());

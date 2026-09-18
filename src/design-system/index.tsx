@@ -383,7 +383,7 @@ const createStyles = (palette: ThemePalette) =>
       color: palette.muted,
       fontSize: 15,
       lineHeight: 22,
-      marginBottom: 22,
+      marginBottom: 7,
     },
     screenHeader: { paddingTop: 22, marginBottom: 4 },
     backButton: {

@@ -1,7 +1,7 @@
 import { useRouter, type Href } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useMemo, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import {
   useAccounts,
   useLendingItems,
@@ -18,6 +18,7 @@ import {
   Screen,
   styles,
   colors,
+  ScreenHeader,
 } from "@/design-system";
 import { formatMoney as money } from "@/utils/money";
 
@@ -168,22 +169,11 @@ export default function DashboardScreen() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ paddingTop: 18, paddingBottom: 18 }}>
-        <View style={styles.listHeader}>
-          <View>
-            <Text style={styles.eyebrow}>DAY2DAY</Text>
-            <Text style={styles.headerTitle}>
-              {greeting}
-              {name ? `, ${name}` : ""}
-            </Text>
-          </View>
-          <IconButton
-            label="Open settings"
-            icon="⚙"
-            onPress={() => router.push("/settings" as unknown as Href)}
+      <ScrollView contentContainerStyle={{ paddingBottom: 18 }}>
+          <ScreenHeader
+            eyebrow="DAY2DAY"
+            title={greeting + (name ? `, \n ${name}` : "")}
           />
-        </View>
-
         {hasError ? (
           <ErrorState
             message="Your accounts, transactions, ledgers, or tasks couldn't load."

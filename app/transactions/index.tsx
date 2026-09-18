@@ -1,6 +1,16 @@
 import { useRouter, type Href } from "expo-router";
-import { useMemo } from "react";
-import { isThisWeek, isToday, isYesterday, format } from "date-fns";
+import { Ionicons } from "@expo/vector-icons";
+import { BarChart } from "react-native-gifted-charts";
+import { useMemo, useState } from "react";
+import {
+  isThisWeek,
+  isToday,
+  isYesterday,
+  format,
+  endOfMonth,
+  startOfMonth,
+  subMonths,
+} from "date-fns";
 import {
   Alert,
   Pressable,
@@ -12,8 +22,6 @@ import {
 import { useAccounts, useRemoveTransaction, useTransactions } from "@/db/hooks";
 import {
   BottomBar,
-  Card,
-  Button,
   EmptyState,
   ErrorState,
   LoadingState,
@@ -64,6 +72,7 @@ export default function TransactionsScreen() {
     refetch,
   } = useTransactions();
   const removeTransaction = useRemoveTransaction();
+  const [balanceVisible, setBalanceVisible] = useState(true);
 
   const accountName = (id: string) =>
     accounts.find((account) => account.id === id)?.name ?? "Account";
@@ -86,8 +95,75 @@ export default function TransactionsScreen() {
   const expenses = filtered
     .filter((item) => item.type === "expense")
     .reduce((sum, item) => sum + item.amountMinor, 0);
-  const flowTotal = income + expenses;
-  const incomeShare = flowTotal ? Math.round((income / flowTotal) * 100) : 0;
+  const balance =
+    accounts.reduce((sum, account) => sum + account.openingBalanceMinor, 0) +
+    transactions.reduce(
+      (sum, item) =>
+        sum +
+        (item.type === "income"
+          ? item.amountMinor
+          : item.type === "expense"
+            ? -item.amountMinor
+            : 0),
+      0,
+    );
+  const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
+  const lastMonthBalance =
+    accounts.reduce((sum, account) => sum + account.openingBalanceMinor, 0) +
+    transactions.reduce((sum, item) => {
+      if (new Date(item.transactionDate) > lastMonthEnd) return sum;
+      return (
+        sum +
+        (item.type === "income"
+          ? item.amountMinor
+          : item.type === "expense"
+            ? -item.amountMinor
+            : 0)
+      );
+    }, 0);
+  const balanceChangePercent =
+    lastMonthBalance === 0
+      ? balance === 0
+        ? 0
+        : 100
+      : ((balance - lastMonthBalance) / Math.abs(lastMonthBalance)) * 100;
+  const balanceChangeLabel = `${balanceChangePercent >= 0 ? "+" : ""}${balanceChangePercent.toFixed(1)}% from last month`;
+  const monthlyCashflow = useMemo(() => {
+    const months = Array.from({ length: 6 }, (_, index) => {
+      const month = startOfMonth(subMonths(new Date(), 5 - index));
+      return {
+        key: format(month, "yyyy-MM"),
+        label: format(month, "MMM"),
+        income: 0,
+        expense: 0,
+      };
+    });
+    const monthByKey = new Map(months.map((month) => [month.key, month]));
+    transactions.forEach((item) => {
+      const month = monthByKey.get(
+        format(startOfMonth(new Date(item.transactionDate)), "yyyy-MM"),
+      );
+      if (!month) return;
+      if (item.type === "income") month.income += item.amountMinor;
+      if (item.type === "expense") month.expense += item.amountMinor;
+    });
+    return months;
+  }, [transactions]);
+  const chartData = useMemo(
+    () =>
+      monthlyCashflow.flatMap((month) => [
+        {
+          value: month.income,
+          label: month.label,
+          frontColor: colors.positive,
+        },
+        {
+          value: month.expense,
+          frontColor: colors.negative,
+        },
+      ]),
+    [monthlyCashflow],
+  );
 
   const confirmDelete = (item: Transaction) => {
     Alert.alert(
@@ -131,68 +207,144 @@ export default function TransactionsScreen() {
           <LoadingState label="Loading your transactions..." />
         ) : (
           <>
-            <Card
-              style={{
-                backgroundColor: colors.surfaceRaised,
-                borderColor: colors.borderStrong,
-                padding: 22,
-              }}
-            >
-              <View style={styles.listHeader}>
-                <View>
-                  <Text style={styles.eyebrow}>NET FLOW</Text>
-                  <Text style={styles.metric}>{money(income - expenses)}</Text>
-                </View>
-                <View
-                  style={{
-                    borderWidth: 1,
-                    borderColor: colors.borderStrong,
-                    borderRadius: 999,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
-                  }}
+            <View style={{ paddingVertical: 8 }}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+              >
+                <Text style={styles.eyebrow}>TOTAL BALANCE</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    balanceVisible ? "Hide balance" : "Show balance"
+                  }
+                  accessibilityState={{ selected: balanceVisible }}
+                  onPress={() => setBalanceVisible((visible) => !visible)}
+                  style={({ pressed }) => [
+                    { padding: 4, marginBottom: 8 },
+                    pressed && styles.pressed,
+                  ]}
                 >
-                  <Text
+                  <Ionicons
+                    name={balanceVisible ? "eye-outline" : "eye-off-outline"}
+                    size={22}
+                    color={colors.muted}
+                  />
+                </Pressable>
+              </View>
+              <Text style={styles.metric}>
+                {balanceVisible ? money(balance) : "••••••"}
+              </Text>
+              <Text
+                style={[
+                  styles.muted,
+                  {
+                    marginTop: 4,
+                    color:
+                      balanceChangePercent >= 0
+                        ? colors.positive
+                        : colors.negative,
+                  },
+                ]}
+              >
+                {balanceChangeLabel}
+              </Text>
+              <View style={[styles.row, { marginTop: 18 }]}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Send money"
+                  onPress={() => router.push("/transactions/new?type=expense")}
+                  style={({ pressed }) => [
+                    {
+                      flex: 1,
+                      backgroundColor: colors.accent,
+                      borderRadius: 12,
+                      paddingVertical: 11,
+                      alignItems: "center",
+                    },
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <View
                     style={{
-                      color: colors.accentText,
-                      fontSize: 11,
-                      fontWeight: "800",
-                      letterSpacing: 0.6,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
                     }}
                   >
-                    {incomeShare}% IN
-                  </Text>
-                </View>
-              </View>
-              {flowTotal > 0 ? (
-                <View style={styles.progressTrack}>
+                    <Text
+                      style={{
+                        color: colors.onAccent,
+                        fontSize: 18,
+                        fontWeight: "800",
+                      }}
+                    >
+                      ↗
+                    </Text>
+                    <Text style={{ color: colors.onAccent, fontWeight: "800" }}>
+                      Send
+                    </Text>
+                  </View>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Receive money"
+                  onPress={() => router.push("/transactions/new?type=income")}
+                  style={({ pressed }) => [
+                    {
+                      flex: 1,
+                      backgroundColor: colors.positive,
+                      borderWidth: 1,
+                      borderColor: colors.borderStrong,
+                      borderRadius: 12,
+                      paddingVertical: 11,
+                      alignItems: "center",
+                    },
+                    pressed && styles.pressed,
+                  ]}
+                >
                   <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${incomeShare}%`,
-                        backgroundColor: colors.positive,
-                        borderRadius: 0,
-                      },
-                    ]}
-                  />
-                </View>
-              ) : null}
-              <View style={[styles.row, { marginTop: 18 }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.muted}>Money in</Text>
-                  <Text style={styles.success}>{money(income)}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.muted}>Money out</Text>
-                  <Text style={styles.destructiveText}>{money(expenses)}</Text>
-                </View>
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: colors.onAccent,
+                        fontSize: 18,
+                        fontWeight: "800",
+                      }}
+                    >
+                      ↙
+                    </Text>
+                    <Text style={{ color: colors.onAccent, fontWeight: "800" }}>
+                      Receive
+                    </Text>
+                  </View>
+                </Pressable>
               </View>
-            </Card>
+
+              <BarChart
+                data={chartData}
+                height={150}
+                barWidth={10}
+                spacing={10}
+                initialSpacing={10}
+                endSpacing={6}
+                roundedTop
+                hideAxesAndRules
+                hideYAxisText
+                disableScroll
+                isAnimated
+                animationDuration={350}
+                xAxisLabelTextStyle={{ color: colors.muted, fontSize: 11 }}
+              />
+            </View>
 
             <View style={[styles.listHeader, { marginTop: 14 }]}>
               <View>
-                <Text style={styles.sectionTitle}>Activity</Text>
+                <Text style={styles.sectionLabel}>RECENT ACTIVITY</Text>
               </View>
               <Pressable
                 accessibilityRole="button"
@@ -214,10 +366,8 @@ export default function TransactionsScreen() {
                 message={
                   transactions.length
                     ? "Try another filter or clear the current view."
-                    : "Add your first income or expense."
+                    : "Use Send or Receive above to record your first movement."
                 }
-                action={"Add transaction"}
-                onAction={() => router.push("/transactions/new")}
               />
             ) : (
               groups.map(([label, items]) => (
@@ -330,39 +480,6 @@ export default function TransactionsScreen() {
           if (tab === "settings") router.push("/settings" as unknown as Href);
         }}
       />
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Add transaction"
-        onPress={() => router.push("/transactions/new")}
-        style={({ pressed }) => [
-          {
-            position: "absolute",
-            right: 28,
-            bottom: 86,
-            width: 58,
-            height: 58,
-            borderRadius: 29,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: colors.accent,
-            borderWidth: 2,
-            borderColor: colors.accentText,
-            shadowColor: colors.text,
-            shadowOffset: { width: 0, height: 5 },
-            shadowOpacity: 0.28,
-            shadowRadius: 8,
-            elevation: 7,
-          },
-          pressed && styles.pressed,
-        ]}
-      >
-        <Text
-          style={{ color: colors.onAccent, fontSize: 30, fontWeight: "300" }}
-        >
-          +
-        </Text>
-      </Pressable>
     </Screen>
   );
 }
